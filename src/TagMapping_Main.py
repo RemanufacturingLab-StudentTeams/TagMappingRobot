@@ -4,17 +4,19 @@ import time
 import pandas as pd
 import shutil
 
+import tag_database as db
 import tag_localistation as taggLoc
 import check_csv as check
 
 # --- Configuration ---
-WATCH_FOLDER = r'./data'  
+WATCH_FOLDER = r'.\data'  
 WRITE_FOLDER = r'C:\Users\yoeri\De Haagse Hogeschool\Tag mapping robot_groups - Data'
 PROCESSED_FOLDER = os.path.join(WATCH_FOLDER, 'processed')
 FILE_PATTERN = 'rfid_data_*.xlsx'
 POLL_INTERVAL = 5  # seconds
 OUTPUT_FILE = "data1.csv"
 
+db.init_db()
 os.makedirs(PROCESSED_FOLDER, exist_ok=True)
 
 def ensure_output_file():
@@ -37,8 +39,8 @@ def process_xlsx_file(xlsx_path, output_path):
 
     try:
         # Process tag data and write results
-        tag_data = taggLoc.process_tag_data(xlsx_path, output_path)
-        check.update_tagg_data(tag_data, output_path)
+        tag_data = taggLoc.process_tag_data(xlsx_path)
+        check.update_tag_data(tag_data, output_path)
     except Exception as e:
         print(f"Error processing {xlsx_path}: {e}")
         return

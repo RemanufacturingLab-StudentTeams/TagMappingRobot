@@ -4,6 +4,8 @@ from shapely.geometry import MultiPolygon, Polygon as ShapelyPolygon
 from shapely.affinity import rotate
 import pandas as pd
 
+import tag_database as db
+
 # -------------------
 # Constants
 # -------------------
@@ -211,7 +213,7 @@ def find_most_common_intersection(shapely_polygons):
     return current_intersection
 
 
-def process_tag_data(excel_file, file_path):
+def process_tag_data(excel_file):
     """Process tag data from an Excel file and generate plots for each tag."""
     ##It makes a panda file from the excel file
     xl = pd.ExcelFile(excel_file)
@@ -227,7 +229,6 @@ def process_tag_data(excel_file, file_path):
         all_data = []
         all_antennas = []
         
-        #It gets the actual location of the tag, input from user, 
         tag_x = df['Tag X [m]'].iloc[0]
         tag_y = df['Tag Y [m]'].iloc[0]
         for distance in unique_distances:
@@ -238,10 +239,15 @@ def process_tag_data(excel_file, file_path):
             beta = max_rssi_row['Antenna Rot Z [deg]']
             ant_x = max_rssi_row['Antenna X [m]']
             ant_y = max_rssi_row['Antenna Y [m]']
+            # if num_locations < 2:
+            #     db.add_measurement(sheet_name, rssi_received, ant_x, ant_y, beta)
+            #     print (f"saved {sheet_name} with {rssi_received}")
+            #     continue #go to next tag info 
             ##First plot, curves is the coverage contour of that antenna for the signal strengthw
             curves = create_single_plot(rssi_received, ant_x, ant_y, beta, len(all_data)+1, all_antennas, tag_x, tag_y, sheet_name)
             all_data.append((rssi_received, ant_x, ant_y, beta, curves))
             all_antennas.append((rssi_received, ant_x, ant_y, beta, curves))
+
         shapely_polygons = []
         for _, _, _, _, curves in all_data:
             x_upper, y_upper, x_lower, y_lower = curves
@@ -249,28 +255,30 @@ def process_tag_data(excel_file, file_path):
             shapely_polygons.append(ShapelyPolygon(polygon_points))
         common_intersection = find_most_common_intersection(shapely_polygons)
         if common_intersection is not None and not common_intersection.is_empty:
+            # db.save_polygon(sheet_name, common_intersection)
+            # print (f"saved {sheet_name}")
             if (common_intersection.geom_type == "MultiPolygon"):
                 continue
             centroid = common_intersection.centroid
             
             
-        #equal_area_radius = equal_area_circle(common_intersection)
-        #max_distence_radius = max_distence_circle(common_intersection)
-        #bounds_polygon =    min_max_array(common_intersection)
-        radius, width, height = enclosing_ellipse(common_intersection)
+            #equal_area_radius = equal_area_circle(common_intersection)
+            #max_distence_radius = max_distence_circle(common_intersection)
+            #bounds_polygon =    min_max_array(common_intersection)
+            radius, width, height = enclosing_ellipse(common_intersection)
+            
         
-        
-        tag_data = {
-            "ID": sheet_name,
-            "X" : round(centroid.x,2),
-            "Y" : round(centroid.y,2),
-            "r" : round(radius,2),
-            "w" : round(width,2),
-            "h" : round(height,2)
-            # 'max distence radius' : max_distence_radius,
-            # 'bounds polygon' : bounds_polygon
-        }     
-        all_tags_data.append(tag_data)
+            tag_data = {
+                "ID": sheet_name,
+                "X" : round(centroid.x,2),
+                "Y" : round(centroid.y,2),
+                "r" : round(radius,2),
+                "w" : round(width,2),
+                "h" : round(height,2)
+                # 'max distence radius' : max_distence_radius,
+                # 'bounds polygon' : bounds_polygon
+            }    
+            all_tags_data.append(tag_data)
     return(all_tags_data)
         
 
