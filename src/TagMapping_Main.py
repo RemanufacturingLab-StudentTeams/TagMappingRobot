@@ -1,4 +1,4 @@
-import tagg_localistation_WV as taggLoc
+import tag_localistation as taggLoc
 import os
 import glob
 import time
@@ -14,7 +14,7 @@ if __name__ == "__main__":
     start = time.perf_counter()
     
     #Look for excel file with that name. 
-    excel_files = glob.glob('rfid_data_140525_132422-Test6.xlsx')
+    excel_files = glob.glob('data/rfid_data_140525_132422-Test6.xlsx')
     if not excel_files: 
         print("No RFID data files found in the current directory!")
         exit(1)
@@ -30,7 +30,7 @@ if __name__ == "__main__":
         
         ## if file does not exist, creat it
         if not os.path.exists(file_path):
-            pd.DataFrame(columns=["ID", "X","Y", "r"]).to_csv(file_path, index=False)
+            pd.DataFrame(columns=["ID", "X","Y", "r", "w", "h"]).to_csv(file_path, index=False)
             print(f"Created new file: {file}\nat: {file_path}")
         print (f"{'-'*30}")    
         
