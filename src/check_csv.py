@@ -1,7 +1,18 @@
 import pandas as pd
+import time
         
+def is_file_ready(file_path, retries=3, delay=1):
+    """Check if a file is ready to be read (not being written)."""
+    for _ in range(retries):
+        try:
+            pd.read_excel(file_path, nrows=1)
+            return True
+        except Exception:
+            time.sleep(delay)
+    return False
+
+
 def update_tagg_data(tag_data, file_path):
-    
     ## read current data file
     current_tag_data = pd.read_csv(file_path)
 

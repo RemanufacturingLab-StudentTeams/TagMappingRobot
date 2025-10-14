@@ -1,49 +1,83 @@
-import tag_localistation as taggLoc
 import os
 import glob
 import time
 import pandas as pd
+import shutil
+
+import tag_localistation as taggLoc
 import check_csv as check
 
-folder = r'C:\Users\yoeri\De Haagse Hogeschool\Tag mapping robot_groups - Data'
-file  = "data1.csv"
+# --- Configuration ---
+WATCH_FOLDER = r'./data'  
+WRITE_FOLDER = r'C:\Users\yoeri\De Haagse Hogeschool\Tag mapping robot_groups - Data'
+PROCESSED_FOLDER = os.path.join(WATCH_FOLDER, 'processed')
+FILE_PATTERN = 'rfid_data_*.xlsx'
+POLL_INTERVAL = 5  # seconds
+OUTPUT_FILE = "data1.csv"
 
+os.makedirs(PROCESSED_FOLDER, exist_ok=True)
 
+def ensure_output_file():
+    """Create the main CSV file if it does not exist."""
+    file_path = os.path.join(WRITE_FOLDER, OUTPUT_FILE)
+    if not os.path.exists(file_path):
+        pd.DataFrame(columns=["ID", "X", "Y", "r", "w", "h"]).to_csv(file_path, index=False)
+        print(f"Created new file: {OUTPUT_FILE}\nat: {file_path}")
+    return file_path
 
-if __name__ == "__main__":
+def process_xlsx_file(xlsx_path, output_path):
+    """Process a single Excel file and move it when done."""
     start = time.perf_counter()
-    
-    #Look for excel file with that name. 
-    excel_files = glob.glob('data/rfid_data_140525_132422-Test6.xlsx')
-    if not excel_files: 
-        print("No RFID data files found in the current directory!")
-        exit(1)
-    
-    ## Gets the newest file, handig voor onze toepassing?
-    latest_file = max(excel_files, key=lambda x: os.path.getmtime(x))
-    print(f"Using most recent data file: {latest_file}")
-    ## Start process
-    
+
+    if not check.is_file_ready(xlsx_path):
+        print(f"{xlsx_path} is not ready yet, will retry later.")
+        return
+
+    print(f"\nFound {xlsx_path}, processing...\n{'-' * 40}")
+
     try:
-        ## set path dir
-        file_path = os.path.join(folder, file)
-        
-        ## if file does not exist, creat it
-        if not os.path.exists(file_path):
-            pd.DataFrame(columns=["ID", "X","Y", "r", "w", "h"]).to_csv(file_path, index=False)
-            print(f"Created new file: {file}\nat: {file_path}")
-        print (f"{'-'*30}")    
-        
-        ## process tagg data and write results
-        tag_data = taggLoc.process_tag_data(latest_file, file_path)
-        check.update_tagg_data(tag_data, file_path)
-        
-        
-        eind = time.perf_counter()
-        full_code_time = round(eind-start,4)
-        print(f"{'-'*30}\nFull code time: {full_code_time}")
+        # Process tag data and write results
+        tag_data = taggLoc.process_tag_data(xlsx_path, output_path)
+        check.update_tagg_data(tag_data, output_path)
+    except Exception as e:
+        print(f"Error processing {xlsx_path}: {e}")
+        return
+
+    # Move processed file
+    try:
+        dest_path = os.path.join(PROCESSED_FOLDER, os.path.basename(xlsx_path))
+        shutil.move(xlsx_path, dest_path)
+        print(f"Moved to {dest_path}")
+    except Exception as e:
+        print(f"Error moving {xlsx_path}: {e}")
+
+    cycle_time = round(time.perf_counter() - start, 4)
+    print(f"{'-' * 40}\nCycle time: {cycle_time} seconds")
+
+def main():
+    """Main loop to monitor and process files."""
+    output_path = ensure_output_file()
+    print(f"\nWatching folder '{WATCH_FOLDER}' for files matching '{FILE_PATTERN}'...\n")
+
+    try:
+        while True:
+            xlsx_files = glob.glob(os.path.join(WATCH_FOLDER, FILE_PATTERN))
+
+            if not xlsx_files:
+                print("No new files found.")
+            else:
+                # Sort by modification time (oldest first)
+                xlsx_files.sort(key=lambda f: os.path.getmtime(f))
+
+                for xlsx_path in xlsx_files:
+                    process_xlsx_file(xlsx_path, output_path)
+
+            time.sleep(POLL_INTERVAL)
 
     except KeyboardInterrupt:
         print("\nProcessing stopped by user.")
     except Exception as e:
-        print(f"\nAn error occurred: {str(e)}")
+        print(f"\nUnexpected error: {e}")
+        
+if __name__ == "__main__":
+    main()

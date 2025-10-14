@@ -150,8 +150,8 @@ def create_single_plot(rssi_received, ant_x, ant_y, beta, location_num, all_ante
     upper_rssi = rssi_received + rms_rssi
     lower_rssi = rssi_received - rms_rssi
 
-    x_upper, y_upper = plot_curve(upper_rssi, ant_x, ant_y, beta, angles, angles_rad, '-', f'Upper bound')
-    x_lower, y_lower = plot_curve(lower_rssi, ant_x, ant_y, beta, angles, angles_rad, '-', f'Lower bound')
+    x_upper, y_upper = plot_curve(upper_rssi, ant_x, ant_y, beta, angles, angles_rad, '-', 'Upper bound')
+    x_lower, y_lower = plot_curve(lower_rssi, ant_x, ant_y, beta, angles, angles_rad, '-', 'Lower bound')
     
     return x_upper, y_upper, x_lower, y_lower
 
