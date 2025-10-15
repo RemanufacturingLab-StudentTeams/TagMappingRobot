@@ -39,81 +39,13 @@ def init_db():
     conn.close()
 
 # -----------------------------------------------------------
-# Measurement Functions
-# -----------------------------------------------------------
-
-def add_measurement(tag_id, rssi, x, y, rotation):
-    """Add a single RSSI measurement."""
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    c.execute(
-        "INSERT INTO measurements (tag_id, rssi, x, y, rotation, timestamp) VALUES (?, ?, ?, ?, ?, ?)",
-        (tag_id, rssi, x, y, rotation, datetime.now().isoformat())
-    )
-    conn.commit()
-    conn.close()
-
-
-def add_measurements_bulk(measurements):
-    """Add multiple RSSI measurements at once."""
-    if not measurements:
-        return
-
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    timestamp = datetime.now().isoformat()
-    data = [(m["tag_id"], m["rssi"], m["x"], m["y"], m["rotation"], timestamp) for m in measurements]
-    c.executemany(
-        "INSERT INTO measurements (tag_id, rssi, x, y, rotation, timestamp) VALUES (?, ?, ?, ?, ?, ?)",
-        data
-    )
-    conn.commit()
-    conn.close()
-
-
-def get_measurements(tag_id, limit=None):
-    """Get all (or last N) RSSI measurements for a tag."""
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    if limit:
-        c.execute("""
-            SELECT rssi, x, y, rotation, timestamp
-            FROM measurements
-            WHERE tag_id=?
-            ORDER BY id DESC
-            LIMIT ?
-        """, (tag_id, limit))
-    else:
-        c.execute("""
-            SELECT rssi, x, y, rotation, timestamp
-            FROM measurements
-            WHERE tag_id=?
-            ORDER BY id
-        """, (tag_id,))
-    rows = c.fetchall()
-    conn.close()
-    return [
-        {"rssi": rssi, "x": x, "y": y, "rotation": rotation, "timestamp": ts}
-        for rssi, x, y, rotation, ts in rows
-    ]
-
-
-def delete_measurements(tag_id):
-    """Delete all RSSI measurements for a tag."""
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    c.execute("DELETE FROM measurements WHERE tag_id=?", (tag_id,))
-    conn.commit()
-    conn.close()
-
-# -----------------------------------------------------------
 # Polygon Functions
 # -----------------------------------------------------------
 
 def save_polygon(tag_id, polygon):
     """
     Save a Polygon or MultiPolygon for a tag.
-    Automatically deletes previous measurements for that tag.
+    Automatically deletes previous polygon for that tag.
     """
     if not isinstance(polygon, (Polygon, MultiPolygon)):
         raise TypeError("polygon must be a Shapely Polygon or MultiPolygon")
@@ -123,6 +55,9 @@ def save_polygon(tag_id, polygon):
 
     wkt_data = polygon.wkt
     updated_at = datetime.now().isoformat()
+    
+    # Delete previous measurements
+    c.execute("DELETE FROM polygons WHERE tag_id=?", (tag_id,))
 
     c.execute("""
         INSERT INTO polygons (tag_id, wkt, updated_at)
@@ -131,9 +66,6 @@ def save_polygon(tag_id, polygon):
             wkt=excluded.wkt,
             updated_at=excluded.updated_at
     """, (tag_id, wkt_data, updated_at))
-
-    # Delete previous measurements
-    c.execute("DELETE FROM measurements WHERE tag_id=?", (tag_id,))
 
     conn.commit()
     conn.close()

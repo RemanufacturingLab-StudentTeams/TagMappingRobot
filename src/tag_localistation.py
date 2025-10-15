@@ -19,22 +19,7 @@ distance_cache = {}
 # -------------------
 # Utility Functions
 # -------------------
-##Get the average of the rms 
-def equal_area_circle(polygon):
-    """"Calculate circel radius with the same area"""
-    area = polygon.area
-    return (np.sqrt(area / np.pi))
-
-def min_max_array(polygon):
-    """"create array with xmin, ymin, xmax, ymax"""
-    x, y = (polygon.exterior.xy)
-    xmin, ymin, xmax, ymax = polygon.bounds
-    xmin_index = x.index(xmin)
-    ymin_index = y.index(ymin)
-    xmax_index = x.index(xmax)
-    ymax_index = y.index(ymax)
-    return [(xmin, y[xmin_index]),(x[ymin_index], ymin), (xmax, y[xmax_index]),(x[ymax_index], ymax)]
-   
+##Get the average of the rms    
 def get_rms_rssi(rssi):
     """
     Calculate RMS based on the given RSSI value using the formula:
@@ -55,14 +40,6 @@ def rssi_distance_deriv(d):
 def rssi_angle(phi):
     """Calculate RSSI based on angle."""
     return 0.038186*phi - 0.003704 * phi**2
-
-def max_distence_circle(polygon):
-    coords = min_max_array(polygon)
-    delta = []
-    for n in coords:
-        distence = np.sqrt((n[0]-polygon.centroid.x)**2 +(n[1]-polygon.centroid.y)**2)
-        delta.append(distence)
-    return max(delta)
 
 def enclosing_ellipse(geometry, scale=1.1):
     """
@@ -143,7 +120,7 @@ def make_polygon_points(x_upper, y_upper, x_lower, y_lower):
         np.concatenate([y_upper, y_lower[::-1]])
     ))
 
-def create_single_plot(rssi_received, ant_x, ant_y, beta, location_num, all_antennas, tag_x, tag_y, tag_id):
+def create_single_plot(rssi_received, ant_x, ant_y, beta):
     """Create a plot for a single antenna location and tag."""
     #fig = plt.figure(figsize=(12, 12))
     angles = np.linspace(-ALPHA, ALPHA, int(ALPHA * 2 + 1))
@@ -151,10 +128,8 @@ def create_single_plot(rssi_received, ant_x, ant_y, beta, location_num, all_ante
     rms_rssi = get_rms_rssi(rssi_received)
     upper_rssi = rssi_received + rms_rssi
     lower_rssi = rssi_received - rms_rssi
-
     x_upper, y_upper = plot_curve(upper_rssi, ant_x, ant_y, beta, angles, angles_rad, '-', 'Upper bound')
     x_lower, y_lower = plot_curve(lower_rssi, ant_x, ant_y, beta, angles, angles_rad, '-', 'Lower bound')
-    
     return x_upper, y_upper, x_lower, y_lower
 
 def find_most_common_intersection(shapely_polygons):
@@ -227,10 +202,7 @@ def process_tag_data(excel_file):
         if num_locations < 2:
             continue #go to next tag info 
         all_data = []
-        all_antennas = []
         
-        tag_x = df['Tag X [m]'].iloc[0]
-        tag_y = df['Tag Y [m]'].iloc[0]
         for distance in unique_distances:
             distance_data = df[df['Distance [m]'] == distance]
             ## Holds all the info for the strongest signal measured at that distance
@@ -239,32 +211,28 @@ def process_tag_data(excel_file):
             beta = max_rssi_row['Antenna Rot Z [deg]']
             ant_x = max_rssi_row['Antenna X [m]']
             ant_y = max_rssi_row['Antenna Y [m]']
-            # if num_locations < 2:
-            #     db.add_measurement(sheet_name, rssi_received, ant_x, ant_y, beta)
-            #     print (f"saved {sheet_name} with {rssi_received}")
-            #     continue #go to next tag info 
             ##First plot, curves is the coverage contour of that antenna for the signal strengthw
-            curves = create_single_plot(rssi_received, ant_x, ant_y, beta, len(all_data)+1, all_antennas, tag_x, tag_y, sheet_name)
+            curves = create_single_plot(rssi_received, ant_x, ant_y, beta)
             all_data.append((rssi_received, ant_x, ant_y, beta, curves))
-            all_antennas.append((rssi_received, ant_x, ant_y, beta, curves))
 
         shapely_polygons = []
         for _, _, _, _, curves in all_data:
             x_upper, y_upper, x_lower, y_lower = curves
             polygon_points = make_polygon_points(x_upper, y_upper, x_lower, y_lower)
             shapely_polygons.append(ShapelyPolygon(polygon_points))
+        
+        if db.get_polygon(sheet_name):
+             prev_poly  = (db.get_polygon(sheet_name))
+             shapely_polygons.append(prev_poly)
+
         common_intersection = find_most_common_intersection(shapely_polygons)
         if common_intersection is not None and not common_intersection.is_empty:
-            # db.save_polygon(sheet_name, common_intersection)
-            # print (f"saved {sheet_name}")
+            db.save_polygon(sheet_name, common_intersection)
+            print (f"saved {sheet_name}")
             if (common_intersection.geom_type == "MultiPolygon"):
                 continue
             centroid = common_intersection.centroid
             
-            
-            #equal_area_radius = equal_area_circle(common_intersection)
-            #max_distence_radius = max_distence_circle(common_intersection)
-            #bounds_polygon =    min_max_array(common_intersection)
             radius, width, height = enclosing_ellipse(common_intersection)
             
         
@@ -275,8 +243,6 @@ def process_tag_data(excel_file):
                 "r" : round(radius,2),
                 "w" : round(width,2),
                 "h" : round(height,2)
-                # 'max distence radius' : max_distence_radius,
-                # 'bounds polygon' : bounds_polygon
             }    
             all_tags_data.append(tag_data)
     return(all_tags_data)
