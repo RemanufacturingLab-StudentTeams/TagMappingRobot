@@ -31,7 +31,5 @@ def update_tag_data(tag_data, file_path):
             ## create new line
             pd.DataFrame([tags]).to_csv(file_path, mode = 'a', header=False, index=False)
             print(f"Added new tag: {tag_ID}")
-            
-            
-#def save_common_intersection(common_intersection, file_path):
+
     

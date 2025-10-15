@@ -49,10 +49,8 @@ def enclosing_ellipse(geometry, scale=1.1):
     """
 
     # --- Combine all geometries if needed ---
-    if isinstance(geometry, MultiPolygon):
-        geometry = geometry.unary_union
-    elif not isinstance(geometry, ShapelyPolygon):
-        raise TypeError("Input must be a Shapely Polygon or MultiPolygon")
+    if not isinstance(geometry, (ShapelyPolygon, MultiPolygon)):
+         raise TypeError("Input must be a Shapely Polygon or MultiPolygon")
 
     # --- Find approximate orientation ---
     min_rect = geometry.minimum_rotated_rectangle
@@ -98,7 +96,6 @@ def translate_points(x, y, ant_x, ant_y):
 
 def plot_curve(rssi_val, ant_x, ant_y, angle_deg, angles, angles_rad, style='-', label=None, color=None):
     """Calculate and plot a single signal curve for an antenna location."""
-    #r = solve_distance(rssi_val) ##Referece radius around antenna
     rssi_phi = np.array([rssi_angle(phi) for phi in angles])
     signal_loss = -rssi_phi
     ##A vector of RSSI values at different angles
@@ -122,7 +119,6 @@ def make_polygon_points(x_upper, y_upper, x_lower, y_lower):
 
 def create_single_plot(rssi_received, ant_x, ant_y, beta):
     """Create a plot for a single antenna location and tag."""
-    #fig = plt.figure(figsize=(12, 12))
     angles = np.linspace(-ALPHA, ALPHA, int(ALPHA * 2 + 1))
     angles_rad = np.radians(angles)
     rms_rssi = get_rms_rssi(rssi_received)
@@ -221,16 +217,14 @@ def process_tag_data(excel_file):
             polygon_points = make_polygon_points(x_upper, y_upper, x_lower, y_lower)
             shapely_polygons.append(ShapelyPolygon(polygon_points))
         
-        if db.get_polygon(sheet_name):
-             prev_poly  = (db.get_polygon(sheet_name))
-             shapely_polygons.append(prev_poly)
+        prev_poly = db.get_polygon(sheet_name)
+        if prev_poly:
+            shapely_polygons.append(prev_poly)
 
         common_intersection = find_most_common_intersection(shapely_polygons)
         if common_intersection is not None and not common_intersection.is_empty:
             db.save_polygon(sheet_name, common_intersection)
             print (f"saved {sheet_name}")
-            if (common_intersection.geom_type == "MultiPolygon"):
-                continue
             centroid = common_intersection.centroid
             
             radius, width, height = enclosing_ellipse(common_intersection)
