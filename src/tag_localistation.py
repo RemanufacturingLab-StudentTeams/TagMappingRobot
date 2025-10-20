@@ -224,17 +224,16 @@ def process_tag_data(excel_file):
         common_intersection = find_most_common_intersection(shapely_polygons)
         if common_intersection is not None and not common_intersection.is_empty:
             db.save_polygon(sheet_name, common_intersection)
-            print (f"saved {sheet_name}")
             centroid = common_intersection.centroid
             
-            radius, width, height = enclosing_ellipse(common_intersection)
+            rotation, width, height = enclosing_ellipse(common_intersection)
             
         
             tag_data = {
                 "ID": sheet_name,
                 "X" : round(centroid.x,2),
                 "Y" : round(centroid.y,2),
-                "r" : round(radius,2),
+                "r" : round(rotation,2),
                 "w" : round(width,2),
                 "h" : round(height,2)
             }    

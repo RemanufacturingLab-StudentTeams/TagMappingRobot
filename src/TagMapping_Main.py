@@ -12,12 +12,15 @@ import check_csv as check
 WATCH_FOLDER = r'.\data'  
 WRITE_FOLDER = r'C:\Users\yoeri\De Haagse Hogeschool\Tag mapping robot_groups - Data'
 PROCESSED_FOLDER = os.path.join(WATCH_FOLDER, 'processed')
+ERROR_FOLDER = os.path.join(WATCH_FOLDER, 'faulty data')
 FILE_PATTERN = 'rfid_data_*.xlsx'
 POLL_INTERVAL = 5  # seconds
 OUTPUT_FILE = "data1.csv"
 
 db.init_db()
 os.makedirs(PROCESSED_FOLDER, exist_ok=True)
+os.makedirs(ERROR_FOLDER, exist_ok=True)
+
 
 def ensure_output_file():
     """Create the main CSV file if it does not exist."""
@@ -38,11 +41,18 @@ def process_xlsx_file(xlsx_path, output_path):
     print(f"\nFound {xlsx_path}, processing...\n{'-' * 40}")
 
     try:
-        # Process tag data and write results
-        tag_data = taggLoc.process_tag_data(xlsx_path)
+        with open(xlsx_path, 'rb') as f:
+            tag_data = taggLoc.process_tag_data(f)  # adjust your function to accept a file-like object
         check.update_tag_data(tag_data, output_path)
     except Exception as e:
+    # file is now closed, safe to move
         print(f"Error processing {xlsx_path}: {e}")
+        try:
+            dest_path = os.path.join(ERROR_FOLDER, os.path.basename(xlsx_path))
+            shutil.move(xlsx_path, dest_path)
+            print(f"Moved to {dest_path}")
+        except Exception as e:
+            print(f"Error moving {xlsx_path}: {e}")
         return
 
     # Move processed file
