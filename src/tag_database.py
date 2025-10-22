@@ -11,83 +11,61 @@ DB_FILE = "tag_data.db"
 # -----------------------------------------------------------
 
 def init_db():
-    """Create the tables if they don't exist."""
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-
-    c.execute("""
-        CREATE TABLE IF NOT EXISTS measurements (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            tag_id TEXT,
-            rssi REAL,
-            x REAL,
-            y REAL,
-            rotation REAL,
-            timestamp TEXT
-        )
-    """)
-
-    c.execute("""
-        CREATE TABLE IF NOT EXISTS polygons (
-            tag_id TEXT PRIMARY KEY,
-            wkt TEXT,
-            updated_at TEXT
-        )
-    """)
-
-    conn.commit()
-    conn.close()
+    """Create the polygons tables if it doesn't exist."""
+    with sqlite3.connect(DB_FILE) as conn:
+        c = conn.cursor()
+        c.execute("""
+            CREATE TABLE IF NOT EXISTS polygons (
+                tag_id TEXT PRIMARY KEY,
+                wkt TEXT,
+                updated_at TEXT
+            )
+        """)
+        conn.commit()
 
 # -----------------------------------------------------------
 # Polygon Functions
 # -----------------------------------------------------------
 
-def save_polygon(tag_id, polygon):
+def save_polygon(tag_id: str, polygon: Polygon | MultiPolygon) -> None:
     """
     Save a Polygon or MultiPolygon for a tag.
-    Automatically deletes previous polygon for that tag.
+    Creates a new row if it does not exist, or replaces the existing polygon if it does.
     """
     if not isinstance(polygon, (Polygon, MultiPolygon)):
         raise TypeError("polygon must be a Shapely Polygon or MultiPolygon")
 
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-
     wkt_data = polygon.wkt
     updated_at = datetime.now().isoformat()
-    
-    # Delete previous measurements
-    c.execute("DELETE FROM polygons WHERE tag_id=?", (tag_id,))
 
-    c.execute("""
-        INSERT INTO polygons (tag_id, wkt, updated_at)
-        VALUES (?, ?, ?)
-        ON CONFLICT(tag_id) DO UPDATE SET
-            wkt=excluded.wkt,
-            updated_at=excluded.updated_at
-    """, (tag_id, wkt_data, updated_at))
+    with sqlite3.connect(DB_FILE) as conn:
+        c = conn.cursor()
+        c.execute("""
+            INSERT INTO polygons (tag_id, wkt, updated_at)
+            VALUES (?, ?, ?)
+            ON CONFLICT(tag_id) DO UPDATE SET
+                wkt=excluded.wkt,
+                updated_at=excluded.updated_at
+        """, (tag_id, wkt_data, updated_at))
+        conn.commit()
 
-    conn.commit()
-    conn.close()
 
 
 def get_polygon(tag_id):
     """Return stored polygon for tag_id, or None."""
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    c.execute("SELECT wkt FROM polygons WHERE tag_id=?", (tag_id,))
-    row = c.fetchone()
-    conn.close()
+    with sqlite3.connect(DB_FILE) as conn:
+        c = conn.cursor()
+        c.execute("SELECT wkt FROM polygons WHERE tag_id=?", (tag_id,))
+        row = c.fetchone()
+    if not row:
+        return None
+    try:
+        return wkt.loads(row[0]) 
+    except Exception as e:
+        raise ValueError(f"Invalid WKT data for tag_id {tag_id}: {e}")
 
-    return wkt.loads(row[0]) if row else None
-
-
-def get_all_polygons():
-    """Return all stored polygons as dict {tag_id: shapely.geometry}"""
-    conn = sqlite3.connect(DB_FILE)
-    c = conn.cursor()
-    c.execute("SELECT tag_id, wkt FROM polygons")
-    rows = c.fetchall()
-    conn.close()
-
-    return {tag_id: wkt.loads(wkt_str) for tag_id, wkt_str in rows}
+def delete_polygon(tag_id):
+    """"Delete stored polygon for tag_id"""
+    with sqlite3.connect(DB_FILE) as conn:
+        conn.execute("DELETE FROM polygons WHERE tag_id=?", (tag_id,))
+        conn.commit()

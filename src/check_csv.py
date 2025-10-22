@@ -1,7 +1,16 @@
 import pandas as pd
 import time
+import os
+
+def init_csv(WRITE_FOLDER, OUTPUT_FILE):
+    """Create the main CSV file if it does not exist."""
+    file_path = os.path.join(WRITE_FOLDER, OUTPUT_FILE)
+    if not os.path.exists(file_path):
+        pd.DataFrame(columns=["ID", "X", "Y", "r", "w", "h"]).to_csv(file_path, index=False)
+        print(f"Created new file: {OUTPUT_FILE}\nat: {file_path}")    
         
-def is_file_ready(file_path, retries=3, delay=1):
+
+def is_file_ready(file_path, retries=3, delay=0.2):
     """Check if a file is ready to be read (not being written)."""
     for _ in range(retries):
         try:
@@ -25,11 +34,11 @@ def update_tag_data(tag_data, file_path):
             ## overite current data
             current_tag_data.loc[current_tag_data["ID"] == tag_ID, ["X", "Y", "r", "w", "h"]] = [tags["X"], tags["Y"], tags["r"], tags["w"], tags["h"]]
             current_tag_data.to_csv(file_path, index = False)
-            print(f"Updated existing tag: {tag_ID}")
+            print(f"Updated tag: {tag_ID}")
         if tag_ID not in current_tag_data["ID"].values:     
             
             ## create new line
             pd.DataFrame([tags]).to_csv(file_path, mode = 'a', header=False, index=False)
-            print(f"Added new tag: {tag_ID}")
+            print(f"Added   tag: {tag_ID}")
 
     
