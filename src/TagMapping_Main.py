@@ -5,6 +5,7 @@ from watchdog_handler import TagFileHandler
 
 import tag_database as db
 import check_csv as check
+import rfid_reader
 
 # --- Configuration ---
 WATCH_FOLDER        = r'.\data'  
@@ -21,11 +22,17 @@ os.makedirs(ERROR_FOLDER, exist_ok=True)
 
 
 def main():
-
+    
     handler = TagFileHandler(WRITE_FOLDER, OUTPUT_FILE, PROCESSED_FOLDER, ERROR_FOLDER)
     observer = Observer()
     observer.schedule(handler, WATCH_FOLDER, recursive=False)
     observer.start()
+    
+    rfid_reader.setup_connection(port="COM3")
+    rfid_reader.set_save_directory(WATCH_FOLDER)
+    rfid_reader.run_loop(interval=5, treshold=5)  # runs every 5 seconds
+    
+   
 
     print(f"Watching folder '{WATCH_FOLDER}' for new files...")
 
