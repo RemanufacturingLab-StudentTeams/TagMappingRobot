@@ -8,6 +8,7 @@ import os
 import simulation_algoritme as sim
 from datetime import datetime
 from math import sqrt
+from watchdog.observers import Observer
 
 
 # Serial port configuration
@@ -26,6 +27,7 @@ ser = None
 df = None
 tag_locations = {}
 save_directory = None  # Default = current working directory
+observer = Observer()
 
 
 # ----------------------- Utility Functions -----------------------
@@ -104,6 +106,7 @@ def signal_handler(sig, frame):
     #save_to_excel()
     #ser.close()
     sys.exit(0)
+    observer.stop()
 
 
 def save_to_excel(custom_dir=None):
@@ -238,6 +241,8 @@ def run_loop(interval, treshold):
     except Exception as e:
         print(f"\nUnexpected fatal error: {e}")
         save_to_excel()
+        observer.stop()
+        observer.join()
         if ser and ser.is_open:
             ser.close()
         raise  # Re-raise to let external caller handle it if needed

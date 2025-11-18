@@ -1,11 +1,11 @@
 import os
 import time
 from watchdog.observers import Observer
-from watchdog_handler import TagFileHandler
+from watchdog_handler_VS import TagFileHandler
 
-import tag_database as db
-import check_csv as check
-import rfid_reader
+import tag_database_VS as db
+import check_csv_VS as check
+import rfid_reader_VS as rfid_reader
 
 # --- Configuration ---
 WATCH_FOLDER        = r'.\data'  

@@ -4,7 +4,7 @@ import time
 import threading
 from watchdog.events import FileSystemEventHandler
 import tag_localistation_VS as taggLoc
-import check_csv as check
+import check_csv_VS as check
 
 
 class TagFileHandler(FileSystemEventHandler):

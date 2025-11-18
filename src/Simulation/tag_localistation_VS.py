@@ -7,7 +7,7 @@ from shapely.ops import unary_union
 import pandas as pd
 import os
 import glob
-import tag_database as db
+import tag_database_VS as db
 from shapely.affinity import rotate
 import time
 
