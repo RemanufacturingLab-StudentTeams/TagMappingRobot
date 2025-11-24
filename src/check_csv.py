@@ -1,14 +1,21 @@
 import pandas as pd
 import time
 import os
+import paho.mqtt.client as mqtt
+import json 
+
+broker = "10.35.4.50"
+port = 1883
+topic = "test/topic"
+client = mqtt.Client()
 
 def init_csv(WRITE_FOLDER, OUTPUT_FILE):
     """Create the main CSV file if it does not exist."""
     file_path = os.path.join(WRITE_FOLDER, OUTPUT_FILE)
+
     if not os.path.exists(file_path):
         pd.DataFrame(columns=["ID", "X", "Y", "r", "w", "h"]).to_csv(file_path, index=False)
         print(f"Created new file: {OUTPUT_FILE}\nat: {file_path}")    
-        
 
 def is_file_ready(file_path, retries=3, delay=0.2):
     """Check if a file is ready to be read (not being written)."""
@@ -20,12 +27,13 @@ def is_file_ready(file_path, retries=3, delay=0.2):
             time.sleep(delay)
     return False
 
-
-def update_tag_data(tag_data, file_path):
-    ## read current data file
+def update_tag_data(tag_data, file_path, client):
+    print (tag_data)
+    message = json.dumps(tag_data)
+    print (message)
+    client.publish(topic, message)
     current_tag_data = pd.read_csv(file_path)
-
-    ##check for every ID 
+    
     for tags in tag_data:  
         tag_ID = tags["ID"]
         
@@ -40,5 +48,6 @@ def update_tag_data(tag_data, file_path):
             ## create new line
             pd.DataFrame([tags]).to_csv(file_path, mode = 'a', header=False, index=False)
             print(f"Added   tag: {tag_ID}")
-
-    
+ 
+def close():
+    client.disconnect()

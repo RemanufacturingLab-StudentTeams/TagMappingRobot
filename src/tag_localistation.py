@@ -224,6 +224,10 @@ def process_tag_data(excel_file):
         common_intersection = find_most_common_intersection(shapely_polygons)
         if common_intersection is not None and not common_intersection.is_empty:
             db.save_polygon(sheet_name, common_intersection)
+
+            if (common_intersection.geom_type == "MultiPolygon"):
+                common_intersection = min(common_intersection.geoms, key=lambda p : p.area)
+            
             centroid = common_intersection.centroid
             
             rotation, width, height = enclosing_ellipse(common_intersection)

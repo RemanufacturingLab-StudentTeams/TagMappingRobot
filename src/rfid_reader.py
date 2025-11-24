@@ -99,10 +99,13 @@ def set_save_directory(path):
     print(f"Save directory set to: {os.path.abspath(save_directory)}")
 
 
-def signal_handler(sig, frame):
+def close():
+    """safly exit """
     save_to_excel()
-    ser.close()
-    sys.exit(0)
+    if ser and ser.is_open:
+        ser.close()
+    print ("rfid reader closed")
+
 
 
 def save_to_excel(custom_dir=None):
@@ -159,11 +162,10 @@ def setup_connection(port='COM3'):
     ])
 
     tag_locations = {}
-    signal.signal(signal.SIGINT, signal_handler)
     print("Setup complete. RFID reader ready.")
 
 
-def perform_measurement(measurement_count):
+def perform_measurement():
     """Perform a single RFID measurement cycle."""
     global df, tag_locations
     
@@ -201,16 +203,13 @@ def perform_measurement(measurement_count):
                 'Tag Y [m]': tag_y
             }
             df = df._append(tag_data, ignore_index=True)
-        measurement_count += 1
-        print("\nCurrent measurements:")
-        print(pd.DataFrame([tag_data]))
         print(f"\nTotal measurements recorded: {len(df)}")
         print(f"Current distance from origin: {distance:.2f} meters")
 
     except Exception as e:
         print(f"Error during measurement: {e}")
         print("Continuing to next measurement...")
-    return (measurement_count)
+    return ()
 
 
 def run_loop(interval, treshold):
@@ -220,7 +219,8 @@ def run_loop(interval, treshold):
     try:
         while True:
             try:
-                measurement_count = perform_measurement(measurement_count)
+                perform_measurement()
+                measurement_count += 1
                 if (measurement_count >= treshold):
                     measurement_count = 0
                     save_to_excel()
