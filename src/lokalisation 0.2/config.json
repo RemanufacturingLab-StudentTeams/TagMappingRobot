@@ -1,0 +1,19 @@
+{
+  "batch_count": 5,
+  "batch_interval": 5.0,
+  "max_size": 10,
+  "measurement_interval": 0.5,
+  "rfid_port": "COM3",
+  "antenna_number": 3,
+  "antenna_power": 3000,
+  "mqtt": {
+    "enabled": false,
+    "broker_host": "10.35.4.50",
+    "broker_port": 1883,
+    "topic": "test/topic"
+  },
+  "interactive": {
+    "antenna_position": true,
+    "ask_tag_position_on_first_seen": false
+  }
+}
