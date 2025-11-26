@@ -20,7 +20,6 @@
 
   <exec_depend>rosidl_default_runtime</exec_depend>
   <depend>ament_index_cpp</depend>
-  <depend>turtlesim</depend>
   <depend>geometry_msgs</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_action</depend>
@@ -34,7 +33,8 @@
   <depend>nav2_msgs</depend>
   <depend>nav_msgs</depend>
   <depend>ackermann_msgs</depend>
-  <depend>wheeltec_robot_msg</depend>
+  <depend>joint_state_publisher</depend>
+  <depend>robot_localization</depend>
   <test_depend>boost</test_depend>
   <export>
     <build_type>ament_cmake</build_type>

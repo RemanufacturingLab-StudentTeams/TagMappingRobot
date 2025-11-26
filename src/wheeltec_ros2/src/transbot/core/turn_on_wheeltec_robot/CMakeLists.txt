@@ -21,7 +21,7 @@ find_package(ament_cmake REQUIRED)
 #find_package(actionlib_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
-find_package(turtlesim REQUIRED)
+
 find_package(nav2_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
@@ -32,18 +32,15 @@ find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(std_msgs REQUIRED)
-find_package(wheeltec_robot_msg REQUIRED)                         # CHANGE
+find_package(ackermann_msgs REQUIRED)                         # CHANGE
 find_package(serial REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 # uncomment the following section in order to fill in
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
-
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/Position.msg"
  )
-
-
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   # the following line skips the linter which checks for copyrights
@@ -64,11 +61,19 @@ set(wheeltec_robot_node_SRCS
 )
 
 add_executable(wheeltec_robot_node src/wheeltec_robot.cpp src/Quaternion_Solution.cpp)
-ament_target_dependencies(wheeltec_robot_node tf2_ros tf2 tf2_geometry_msgs rclcpp std_msgs nav_msgs std_srvs sensor_msgs serial wheeltec_robot_msg turtlesim)
+ament_target_dependencies(wheeltec_robot_node tf2_ros tf2 tf2_geometry_msgs rclcpp std_msgs nav_msgs std_srvs sensor_msgs ackermann_msgs serial)
 
+add_executable(parameter_node src/cpp_parameters_node.cpp)
+ament_target_dependencies(parameter_node rclcpp)
+
+#add_executable(testNode src/test.cpp src/Quaternion_Solution.cpp)
+#ament_target_dependencies(testNode rclcpp std_msgs nav_msgs std_srvs sensor_msgs ackermann_msgs serial wheeltec_robot_msg)
+
+install(PROGRAMS scripts/cmd_vel_to_ackermann_drive.py DESTINATION lib/${PROJECT_NAME})
 
 install(TARGETS
 wheeltec_robot_node
+parameter_node
 
 DESTINATION lib/${PROJECT_NAME}
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
