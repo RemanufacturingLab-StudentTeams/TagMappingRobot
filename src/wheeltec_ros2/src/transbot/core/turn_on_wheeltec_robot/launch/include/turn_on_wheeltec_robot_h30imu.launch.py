@@ -74,6 +74,11 @@ def generate_launch_description():
             launch_arguments={'mini_mec': 'true'}.items(),
     )
 
+    dongguan_type = IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(os.path.join(launch_dir, 'robot_mode_description_minibot.launch.py')),
+            launch_arguments={'dongguan_model': 'true'}.items(),
+    )
+
     #robot_mode_description.launch.py contains flagship products, usually larger chassis robots
     #launch_arguments choices:
 
@@ -90,7 +95,8 @@ def generate_launch_description():
     
     ld = LaunchDescription()
 
-    ld.add_action(minibot_type)
+    ld.add_action(dongguan_type)
+    # ld.add_action(minibot_type)
     #ld.add_action(flagship_type)
     ld.add_action(carto_slam_dec)
     ld.add_action(wheeltec_robot)

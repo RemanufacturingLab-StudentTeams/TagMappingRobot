@@ -48,6 +48,27 @@ def generate_launch_description():
             arguments=['0.34', '0', '0.32','0', '0','0','base_footprint','camera_link'],),
     ])
 
+# LOOK HERE
+    dongguan_model = GroupAction([
+    
+        launch_ros.actions.Node(
+            package='robot_state_publisher', 
+            executable='robot_state_publisher', 
+            name='robot_state_publisher',
+            arguments=[os.path.join(get_package_share_directory('wheeltec_robot_urdf'),'urdf','dongguan.urdf')],),
+            
+        launch_ros.actions.Node(
+            package='tf2_ros', 
+            executable='static_transform_publisher', 
+            name='base_to_laser',
+            arguments=['0.240 ', '0', '0.230','3.14', '0','0','base_footprint','laser'],), # 3.14 is lidar verdraaing
+        launch_ros.actions.Node(
+            package='tf2_ros', 
+            executable='static_transform_publisher', 
+            name='base_to_camera',
+            arguments=['0.34', '0', '0.32','0', '0','0','base_footprint','camera_link'],),
+    ])
+
     top_akm_bs = GroupAction([
         launch_ros.actions.Node(
             package='robot_state_publisher', 
@@ -568,6 +589,6 @@ def generate_launch_description():
     #mini_tank,
     #mini_4wd,senior_4wd_bs_robot,senior_4wd_dl_robot,flagship_4wd_bs_robot,flagship_4wd_dl_robot,top_4wd_bs_robot,top_4wd_dl_robot
     #mini_diff, senior_diff_robot,four_wheel_diff_bs ,four_wheel_diff_dl, brushless_senior_diff,flagship_four_wheel_diff_bs_robot,flagship_four_wheel_diff_dl_robot
-    ld.add_action(senior_mec_bs)
+    ld.add_action(dongguan_model)
     return ld
 
