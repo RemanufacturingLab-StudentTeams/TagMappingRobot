@@ -1,6 +1,5 @@
 #ignore build and install dirs and logs
 
-./build/
-./install/
-
-./log/
+**/build
+**/install/
+**/log
