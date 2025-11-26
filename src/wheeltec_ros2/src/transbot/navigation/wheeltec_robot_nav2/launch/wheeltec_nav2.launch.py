@@ -9,7 +9,10 @@ from launch.substitutions import LaunchConfiguration, PythonExpression
 from launch_ros.actions import Node
 from launch_ros.actions import PushRosNamespace
 from nav2_common.launch import RewrittenYaml
-
+from launch.actions import IncludeLaunchDescription
+from launch.launch_description_sources import PythonLaunchDescriptionSource
+from ament_index_python.packages import get_package_share_directory
+import os
 
 def generate_launch_description():
     # Get the launch directory
@@ -152,7 +155,15 @@ def generate_launch_description():
 
 
     ])
-
+    laser_filter_launch = IncludeLaunchDescription(
+    PythonLaunchDescriptionSource(
+        os.path.join(
+            get_package_share_directory('wheeltec_robot_nav2'),
+            'launch',
+            'laser_filter.launch.py'
+        )
+      )
+    )
     # Create the launch description and populate
     ld = LaunchDescription()
 
@@ -175,5 +186,5 @@ def generate_launch_description():
 
     # Add the actions to launch all of the navigation nodes
     ld.add_action(bringup_cmd_group)
-
+    return LaunchDescription([laser_filter_launch])
     return ld
