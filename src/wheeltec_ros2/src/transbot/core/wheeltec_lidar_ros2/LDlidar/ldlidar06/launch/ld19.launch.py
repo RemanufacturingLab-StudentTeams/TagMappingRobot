@@ -42,7 +42,7 @@ def generate_launch_description():
       parameters=[
         {'product_name': 'LDLiDAR_LD19'},
         {'topic_name': 'scan'},
-        {'port_name': '/dev/wheeltec_lidar'},
+        {'port_name': '/dev/ttyUSB0'},
         {'frame_id': 'base_laser'},
         {'laser_scan_dir': True},
         {'enable_angle_crop_func': False},

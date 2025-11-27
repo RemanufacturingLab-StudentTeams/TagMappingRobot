@@ -44,7 +44,6 @@
 #include <signal.h>
 #include <sensor_msgs/msg/time_reference.hpp>
 #include <std_msgs/msg/int8.hpp>
-#include <cmath>
 
 namespace lslidar_driver
 {
@@ -75,7 +74,6 @@ public:
   bool getUpdateFlag(void);
   void clearUpdateFlag(void);
   void UDP_order(const std_msgs::msg::Int8 msg);
-  void UDP_difop();
 protected:
   rclcpp::Node*  private_nh_;
   uint16_t port_;
