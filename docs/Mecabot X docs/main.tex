@@ -1,3 +1,4 @@
+% !TeX spellcheck = en_GB
 \documentclass[11pt,a4paper]{article}
 
 \usepackage[english]{babel}
@@ -51,13 +52,15 @@
 
 \setcounter{section}{0}
 \pagenumbering{arabic}
-%\renewcommand\thesection{\arabic{section}}
+\renewcommand\thesection{\arabic{section}}
 
 \input{./main/setup}
 
+\input{./main/commands}
+
 \newpage
 
-\addcontentsline{toc}{section}{Reverences}
+\addcontentsline{toc}{section}{References}
 \printbibliography
 
 %appendix

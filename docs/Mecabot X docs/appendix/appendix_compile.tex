@@ -1,3 +1,6 @@
+% !TeX spellcheck = en_GB
+
+%TODO: Add roboworks reference
 \subsection{Compile ROS2}\label{sec:appendix_compile}
 
 When updating the ROS packages or update the source code you might need to re-compile the ROS packages. The following shows how to compile the existing ROS packages.
@@ -6,7 +9,7 @@ The following can be done on the Mecabot X or on your PC. This appendix shows a 
 
 You should have your SSH key added to your GitHub account otherwise you can't use git to clone the needed source code.
 
-\paragraph{Create working dir}
+\subsubsection{Create working directory}
 
 The source code can be found on the Re-manufacturing lab GitHub repository. It can be found in: ''\texttt{TagMappingRobot/src/wheeltec\_ros2}''
 
@@ -19,7 +22,8 @@ cd ~/wheeltec_ros2/src
 \end{minted}
 \end{tcolorbox}
 
-\textbf{Needs a better way to get the source code}
+%TODO: Needs a better way to get the source code.
+
 \begin{tcolorbox}
 \begin{minted}[tabsize=2,breaklines,breakanywhere]{bash}
 git clone --no-checkout git@github.com:RemanufacturingLab-StudentTeams/TagMappingRobot.git
@@ -36,7 +40,7 @@ cd ~/wheeltec/src
 \end{minted}
 \end{tcolorbox}
 
-\paragraph{Install dependencies}
+\subsubsection{Install dependencies}
 
 First initialise rosdep if not done before.
 
@@ -65,7 +69,7 @@ rosdep install --ignore-src --from-path src/ -r -y
 \end{minted}
 \end{tcolorbox}
 
-\paragraph{Compile the source}
+\subsubsection{Compile the source}
 When all the dependency's are downloaded you can start compiling. The following command can be used:
 
 \begin{tcolorbox}
