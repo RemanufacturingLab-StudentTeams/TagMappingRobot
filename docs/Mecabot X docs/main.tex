@@ -1,0 +1,69 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[english]{babel}
+\usepackage[table,xcdraw, svgnames]{xcolor}
+\usepackage[margin=3cm, includefoot]{geometry}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{float}
+
+\usepackage{ragged2e}
+\usepackage{hhline}
+\usepackage{courier}
+
+% To display code
+\usepackage{minted}
+\usepackage{tcolorbox}
+\usepackage{etoolbox}
+%\BeforeBeginEnvironment{minted}{\begin{tcolorbox}}%
+%\AfterEndEnvironment{minted}{\end{tcolorbox}}%
+
+\usepackage{hyperref}
+\hypersetup{
+	colorlinks,
+	citecolor={black},
+	filecolor={black},
+	linkcolor={black},
+	urlcolor={black},
+	pdfauthor={Alireza Beheshti, Rufus Fraanje, Wouter van Velzen},
+	pdftitle={Manual Mecabot X},
+	pdfsubject={Manual Mecabot X},
+	pdfkeywords={manual, Mecabot X},
+}
+
+\usepackage{csquotes}
+
+% References
+\usepackage[backend=biber, style=ieee]{biblatex}
+\addbibresource{references.bib}
+
+\begin{document}
+
+\input{titlepage}
+
+\renewcommand\thesection{}
+\setcounter{page}{1}
+\pagenumbering{Roman}
+
+\tableofcontents
+
+\newpage
+
+\setcounter{section}{0}
+\renewcommand\thesection{\arabic{section}}
+
+\input{./main/setup}
+
+\newpage
+
+\addcontentsline{toc}{section}{Reverences}
+\printbibliography
+
+%appendix
+\newpage
+\section{Appendix}\label{sec:appendix}
+\renewcommand\thesubsection{\Alph{subsection}}
+
+\input{./appendix/appendix}
+
+\end{document}
