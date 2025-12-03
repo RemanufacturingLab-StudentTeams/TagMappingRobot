@@ -1,0 +1,108 @@
+% !TeX spellcheck = en_GB
+\section{ROS domain ID}
+
+The \texttt{ROS\_DOMAIN\_ID} is a way for multiple ROS 2 nodes to communicate with each other over the network\cite{domain_id}. For example RVIZ2 can communicate with the cartographer program on the Mecabot to visualize the room the robot is in. For ROS 2 nodes to communicate, they must be in the same \texttt{ROS\_DOMAIN\_ID}. This means the laptop and the Mecabot need to be on the same network and the same subnet.
+
+This is possible with a VM or WSL, but difficult. \textbf{Therefore it is recommended to use a PC or laptop with a Linux operating system.}
+\newpage
+
+The \texttt{ROS\_DOMAIN\_ID} is an environment variable in ROS 2 that allows you to run multiple ROS 2 processes on the same network without them interfering with each other.
+
+Here are some advantages of using \texttt{ROS\_DOMAIN\_ID}:
+
+\begin{itemize}
+	\item \textbf{Isolation:} By setting different \texttt{ROS\_DOMAIN\_ID} values, you can isolate different sets of nodes from each other. This is useful when you have multiple robots or systems on the same network and want to ensure they don't interfere with each other.
+	\item \textbf{Scalability:} It makes it easier to scale your system by adding more nodes or robots without worrying about conflicts. Each group of nodes can operate independently within its own domain.
+	\item \textbf{Simplified configuration:} It simplifies the configuration of your network by allowing you to manage communication between specific groups of nodes more easily.
+	\item \textbf{Enhanced security:} By isolating different parts of your system, you can enhance security by limiting communication to only the necessary nodes within a domain.
+	\item Using \texttt{ROS\_DOMAIN\_ID} can greatly improve the organization and efficiency of your ROS 2 setup, especially in complex environments with multiple robots or systems.
+\end{itemize}
+
+\subsection{Setup ROS domain ID}
+
+The following is needed to setup the \texttt{ROS\_DOMAIN\_ID} on your laptop and on the Mecabot X. In this chapter you need to open multiple terminals. These terminals are for the laptop and for the Mecabot. If a command needs to be run on the laptop the ''script box'' will be \colorbox{Gainsboro}{grey}. If it needs to be run on the Mecabot the ''script box'' will be \colorbox{NavajoWhite}{yellow}.
+
+%TODO: set the correct collor in the text.
+
+\subsubsection*{Connect the Laptop to the network}
+Make sure the laptop and the Mecabot are connected on the same network. If you don't know how you can check chapter \ref{sec:setup}.
+
+\subsubsection*{Set the ROS domain ID}
+The \texttt{ROS\_DOMAIN\_ID} functions as a communication channel between the laptop and the robot. It is essential that both devices are configure to operate on the same channel.
+
+\paragraph{On laptop:}
+\begin{itemize}
+	\item Open a terminal.
+	\item Run these commands:
+\end{itemize}
+
+\begin{tcolorbox}[colback=Gainsboro]
+\begin{minted}{bash}
+source /opt/ros/humble/setup.bash
+export ROS_DOMAIN_ID=10
+\end{minted}
+\end{tcolorbox}
+
+\textbf{NOTE: If ''\texttt{source /opt/ros/humble/setup.bash}'' doesn't work, it might mean you haven't installed ROS proparly. Check appendix \ref{sec:appendix_setup} for more info.}
+
+\paragraph{On Mecabot:}
+\begin{itemize}
+	\item Open a terminal.
+	\item Run these commands:
+\end{itemize}
+
+\begin{tcolorbox}[colback=NavajoWhite]
+\begin{minted}{bash}
+source /opt/ros/humble/setup.bash
+export ROS_DOMAIN_ID=10
+\end{minted}
+\end{tcolorbox}
+
+\subsubsection*{Verify connectivity}
+When the \texttt{ROS\_DOMAIN\_ID} is set on both the laptop and the Mecabot we can verify the connection. This can be done using the following command
+
+\begin{tcolorbox}[colback=Gainsboro]
+\begin{minted}{bash}
+ping 192.168.0.100
+\end{minted}
+\end{tcolorbox}
+
+\textbf{NOTE: Should be the IP that you found in chapter \ref{sec:setup}.}
+
+If the Mecabot doesn't respond to the ping request, there is something wrong with the network connection between your laptop and the Mecabot.
+
+\subsubsection*{Run ROS Nodes}
+
+ROS 2 comes with a simple test program to test the connectivity between different devices on the same \texttt{ROS\_DOMAIN\_ID}. To test this run the following commands.
+
+\paragraph{On Laptop:}
+\begin{itemize}
+	\item Use existing terminal.
+	\item Run the following command:
+\end{itemize}
+
+\begin{tcolorbox}[colback=Gainsboro]
+\begin{minted}{bash}
+ros2 run demo_nodes_cpp talker
+\end{minted}
+\end{tcolorbox}
+
+\textbf{NOTE: If the ros2 command isn't found or the ''\texttt{demo\_nodes\_cpp}'' then the previous ''\texttt{source /opt/ros/humble/setup.bash}'' didn't work. Go to appendix \ref{sec:appendix_setup} for more info.}
+
+\paragraph{On Mecabot:}
+
+\begin{itemize}
+	\item Use existing terminal.
+	\item Run the following command:
+\end{itemize}
+
+\begin{tcolorbox}[colback=NavajoWhite]
+\begin{minted}{bash}
+ros2 run demo_nodes_cpp listener
+\end{minted}
+\end{tcolorbox}
+
+If the robot and the laptop are correctly put on the same \texttt{ROS\_DOMAIN\_ID} the you should see the following in the terminal. \textbf{TODO: Make picture of the terminal whil running this script.}
+%TODO: add figure for the correct ouput.
+
+\newpage
