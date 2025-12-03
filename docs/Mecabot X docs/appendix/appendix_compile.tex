@@ -1,1 +1,92 @@
 \subsection{Compile ROS2}\label{sec:appendix_compile}
+
+When updating the ROS packages or update the source code you might need to re-compile the ROS packages. The following shows how to compile the existing ROS packages.
+
+The following can be done on the Mecabot X or on your PC. This appendix shows a clean install. If you're only making chances you won't need to download the source. And can continue to: \textbf{TODO}
+
+You should have your SSH key added to your GitHub account otherwise you can't use git to clone the needed source code.
+
+\paragraph{Create working dir}
+
+The source code can be found on the Re-manufacturing lab GitHub repository. It can be found in: ''\texttt{TagMappingRobot/src/wheeltec\_ros2}''
+
+First you need to create a working directory. This needs to be done in your home directory. 
+
+\begin{tcolorbox}
+\begin{minted}{bash}
+mkdir -p ~/wheeltec_ros2/src
+cd ~/wheeltec_ros2/src
+\end{minted}
+\end{tcolorbox}
+
+\textbf{Needs a better way to get the source code}
+\begin{tcolorbox}
+\begin{minted}[tabsize=2,breaklines,breakanywhere]{bash}
+git clone --no-checkout git@github.com:RemanufacturingLab-StudentTeams/TagMappingRobot.git
+cd TagMappingRobot
+git sparse-checkout init --cone
+git sparse-checkout set src/wheeltec_ros2
+git checkout main
+\end{minted}
+\end{tcolorbox}
+
+\begin{tcolorbox}
+\begin{minted}{bash}
+cd ~/wheeltec/src
+\end{minted}
+\end{tcolorbox}
+
+\paragraph{Install dependencies}
+
+First initialise rosdep if not done before.
+
+\begin{tcolorbox}
+\begin{minted}{bash}
+source /opt/ros/humble/include/setup.bash
+\end{minted}
+\end{tcolorbox}
+
+This will let your terminal know where all the standard ROS functions and library's are.
+
+\begin{tcolorbox}
+\begin{minted}{bash}
+sudo rosdep init
+rosdep update
+\end{minted}
+\end{tcolorbox}
+
+This will initialize the rosdep function. Rosdep can be used to download all the missing library's needed to compile the sources\cite{rosdep}.
+
+Lastly the command below will actually download all the missing library's. Make sure you're in the working directory (\texttt{wheeltec\_ros2}).
+
+\begin{tcolorbox}
+\begin{minted}{bash}
+rosdep install --ignore-src --from-path src/ -r -y
+\end{minted}
+\end{tcolorbox}
+
+\paragraph{Compile the source}
+When all the dependency's are downloaded you can start compiling. The following command can be used:
+
+\begin{tcolorbox}
+\begin{minted}{bash}
+colcon build
+\end{minted}
+\end{tcolorbox}
+
+You can compile with some flags. Below is a small explanation. I recommend no compile flag. This way you can copy it to another computer. It does mean the size will be bigger.
+
+\begin{itemize}
+	\item ''\texttt{--symlink-install}''
+	\begin{itemize}
+		\item This will compile the sources using symlinks. This will mean that it will only work on your pc. Because it uses links based on how your working directory is setup\cite{COLCON}.
+	\end{itemize}
+	\item ''\texttt{--merge-install}''
+	\begin{itemize}
+		\item This will compile all the individual packages into one. This is will mean there is no separation between the library's for different packages. This could mean they can break\cite{COLCON}.
+	\end{itemize}
+\end{itemize}
+
+\textbf{NOTE: Sometimes the build fails on ''turn\_on\_wheeltec'' when re-running the same command it does compile.} \\
+\textbf{NOTE: If compiling on PC ''astra\_camera'' will always fail to compile. By adding a file named: ''\texttt{COLCON\_IGNORE}'' (Needs to be capitalized) in the folder: ''\texttt{src/transbot/core/ros2\_astra\_camera}'' it will not compile the camera function and it will continue.} \\
+\textbf{NOTE: It will compile with warnings. This is how it was delivered by the manufacturer. If there is time it could be resolved.}
