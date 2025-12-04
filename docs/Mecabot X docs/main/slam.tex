@@ -1,0 +1,81 @@
+% !TeX spellcheck = en_GB
+\section{SLAM}
+In robotics, SLAM is the term given to \textbf{S}imultaneous \textbf{L}ocalization \textbf{a}nd \textbf{M}apping algorithms\cite{slam_toolbox, slam_wiki}. As the name suggests, this allows the robot to build a map of an unknown environment, as well as improving the map with new features over time. Localization refers to the robot determining its position in relation to the map, termed the global frame. This can be compared to a submarine using its radar sensor to continuously map the terrain of the ocean.
+
+SLAM is also a fundamental aspect of robotic navigation, allowing the robot to plan paths from its current pose to any pose on the global map. Rosbot is a suitable platform to investigate the fundamentals of SLAM and its real-life applications, such as autonomous exploration and self driving vehicles. %TODO: Source? What is ROSbot?
+
+For the subsequent steps, Cartographer is utilized. Cartographer is a system and facilitates real-time 2D and 3D simultaneous localization and mapping (SLAM) across various platforms and sensor configurations. To initiate the Carographer node, execute the following ROS program:
+
+\begin{tcolorbox}[colback=NavajoWhite]
+\begin{minted}{bash}
+ros2 launch wheeltec_cartographer cartographer.launch.py
+\end{minted}
+\end{tcolorbox}
+
+Next you can open RVIZ on your laptop to see the live cartographer data.
+
+\begin{tcolorbox}[colback=Gainsboro]
+\begin{minted}{bash}
+ros2 launch wheeltec_rviz2 wheeltec_rviz.launch.py
+\end{minted}
+\end{tcolorbox}
+
+%TODO picture of working RVIZ
+
+By utilizing one of the movement packages, (see chapter \ref{sec:controlling}) the operator can navigate the robot and illuminate the surrounding map.
+
+The map being visualized can take some time so move slowly.
+
+When done creating the map you can save the map. This is needed to later use it with the Navigation 2 packages. Open a new terminal and type the following command:
+
+\begin{tcolorbox}[colback=NavajoWhite]
+\begin{minted}{bash}
+ros2 run nav2_map_server map_saver_cli -f <directory path>
+\end{minted}
+\end{tcolorbox}
+
+This command initiates the execution of a ROS2 node, nav2\_map\_server specifies the package containing the node, and map\_saver\_cli is the node responsible for saving the map\cite{nav2_saver}. The ''\texttt{-f}'' flag followed by \texttt{<directory path>} indicates the file path where the map should be saved. For example, to save the map to a directory named maps in the home directory, \texttt{<directory path>} would be replace with: ''~/maps/my\_map''.
+
+\subsection{Trouble shooting}
+
+\subsubsection{Cartographer is not found}
+
+Is your ROS environment sourced?
+
+\begin{tcolorbox}[colback=NavajoWhite]
+\begin{minted}{bash}
+source ~/wheeltec_ros2/install/setup.bash
+\end{minted}
+\end{tcolorbox}
+
+source wheeltec
+
+\subsubsection{Cartographer is not working}
+
+Check LiDAR is functional.
+
+% ros2 launch turn_on_wheeltec_robot wheeltec_lidar.launch.py
+
+\subsubsection{NO RVIZ data}
+
+Does your laptop and the Mecabot have the same ''\texttt{ROS\_DOMAIN\_ID}''?
+
+''export rod domain id''
+
+Check if the simple ROS demo\_node\_cpp talker and listener is working. (See chapter \ref{sec:ROS_ID}.)
+
+If the talker en listener aren't working your laptop and the Mecabot are not on the same network. (Using WSL or using a VM)
+
+Advise: use Linux natively.
+
+\subsubsection{Can't save map}
+
+Does your new terminal have the same ''\texttt{ROS\_DOMAIN\_ID}'' as the cartographer?
+
+\paragraph{Error message}
+
+Error can't rotate map %TODO: actual error mesage. + picture error message
+
+The ''\texttt{-f}'' tag doesn't always work. Try a different directory or name or remove the tag all together. If no tag is given the program will save with a random name in the current directory. Sometimes you just need to retry without doing anything different and it just works.
+
+\newpage
