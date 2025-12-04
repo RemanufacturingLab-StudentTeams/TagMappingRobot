@@ -1,13 +1,139 @@
 % !TeX spellcheck = en_GB
 \section{Commands}\label{sec:commands}
+Bellow are the ros2 commands that are shipped with the standard package. It shows what the commands do and how they work.
+
+To run commands on PC you need to download the needed binary's. Appendix \ref{sec:appendix_copy_bin} tells you how to download the binary from the Mecabot X. Appendix \ref{sec:appendix_compile} show how to compile the binary's yourself.
+
+ If a command needs to be run on the laptop the ''script box'' will be \colorbox{Gainsboro}{grey}. If it needs to be run on the Mecabot the ''script box'' will be \colorbox{NavajoWhite}{yellow}.
 
 \subsection{wheeltec\_rviz2}\label{sec:rviz}
 
+RVIZ2 is an acronym for ROS Visualization 2\cite{RVIZ2}. It is a sophisticated visualization tool developed for ROS 2. It offers a graphical interface that enables users to visualize various aspects of a robot's state, including sensor data, the robot's position, and its planned navigation path.
+
+RVIZ2 should be run on a laptop that is connected to the same \texttt{ROS\_DOMAIN\_ID} and on the same network as the Mecabot.
+
+Run the following command on your laptop:
+
+\begin{tcolorbox}[colback=Gainsboro]
+\begin{minted}{bash}
+source ~/wheeltec_ros2/install/setup.bash
+export ROS_DOMAIN_ID=10
+ros2 launch wheeltec_rviz2 wheeltec_rviz.launch.py
+\end{minted}
+\end{tcolorbox}
+
+This should run a RVIZ window. Figure \ref{fig:RVIZ2} shows an example.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\linewidth]{./pictures/RVIZ2.png}
+	\caption{Empty RVIZ2 window}
+	\label{fig:RVIZ2}
+\end{figure}
+
 \subsection{wheeltec\_keyboard}
+
+
+\subsubsection*{Command}
+
+\begin{tcolorbox}[colback=NavajoWhite]
+\begin{minted}{bash}
+ros2 run wheeltec_robot_keyboard wheeltec_keyboard
+\end{minted}
+\end{tcolorbox}
+
+\subsubsection*{Arguments}
+
+None
+
 
 \subsection{wheeltec\_joy}
 
+\subsubsection*{Command}
+
+\begin{tcolorbox}[colback=NavajoWhite]
+\begin{minted}{bash}
+ros2 launch wheeltec_joy wheeltec_joy.launch.py
+\end{minted}
+\end{tcolorbox}
+
+\subsubsection*{Arguments}
+
+None
+
+\subsection{turn\_on\_wheeltec\_robot}
+These commands can be used manually. But other commands already do this in the background when booting up.
+
+\subsubsection*{Command}
+
+\begin{tcolorbox}[colback=NavajoWhite]
+\begin{minted}{bash}
+ros2 launch turn_on_wheletec_robot <ARGUMENT>
+\end{minted}
+\end{tcolorbox}
+
+\paragraph{Most used:}
+The following arguments are most used. The rest of the commands are shown in the arguments section.
+
+Completely turn on the Mecabot.
+\begin{tcolorbox}[colback=NavajoWhite]
+\begin{minted}{bash}
+ros2 launch turn_on_wheletec_robot turn_on_wheeltec_robot.launch.py
+\end{minted}
+\end{tcolorbox}
+
+
+Turns on the LiDAR:
+\begin{tcolorbox}[colback=NavajoWhite]
+\begin{minted}{bash}
+ros2 launch turn_on_wheletec_robot wheeltec_lidar.launch.py
+\end{minted}
+\end{tcolorbox}
+
+\textbf{Turns on sensors?:}
+\begin{tcolorbox}[colback=NavajoWhite]
+\begin{minted}{bash}
+ros2 launch turn_on_wheletec_robot wheeltec_sensors.launch.py
+\end{minted}
+\end{tcolorbox}
+
+\subsubsection*{Arguments}
+
+%TODO: Find out what all the arguments do!
+\begin{itemize}
+	\item ''\texttt{base\_serial.launch.py}''
+	\begin{itemize}
+		\item \textbf{Start serial port?}
+	\end{itemize}
+	\item ''\texttt{robot\_mode\_description.launch.py}''
+	\begin{itemize}
+		\item \textbf{Setup robot description?}
+	\end{itemize}
+	\item ''\texttt{robot\_mode\_description\_minibot.launch.py}''
+	\begin{itemize}
+		\item \textbf{Same as ''\texttt{robot\_mode\_description.launch.py}'' but for different type of robot?}
+	\end{itemize}
+	\item ''\texttt{robotandlidar.launch.py}''
+	\begin{itemize}
+		\item \textbf{Does the same as ''\texttt{turn\_on\_wheeltec.launch.py}'' robot?}
+	\end{itemize}
+	\item ''\texttt{turn\_on\_wheeltec\_robot.launch.py}''
+	\begin{itemize}
+		\item Turns on all the sensors of the Mecabot.
+	\end{itemize}
+	\item ''\texttt{wheeltec\_camera.launch.py}''
+	\begin{itemize}
+		\item Turns on the camera unit of the Mecabot.
+	\end{itemize}
+	\item ''\texttt{wheeltec\_ekf.launch.py}''
+	\begin{itemize}
+		\item \textbf{Turns on the EKF unit? [what is EKF?]}
+	\end{itemize}
+\end{itemize}
+
 \subsection{wheeltec\_cartographer}
+
+
 
 \subsection{nav2\_map\_saver}
 

@@ -1,10 +1,10 @@
 # TODO List
 
-- [ ] Setup WSL
+- [X] Setup WSL
 - [ ] Setup VM
-- [ ] Setup in linux
-- [ ] Install dependencies
-- [ ] Setup ROS inviorment
+- [X] Setup in linux
+- [X] Install dependencies
+- [X] Setup ROS inviorment
 - [ ] RVIZ2
 - [ ] Cartagropher
 - [ ] NAV2
