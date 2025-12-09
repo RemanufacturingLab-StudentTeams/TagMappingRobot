@@ -1,22 +1,22 @@
 /lslidar_driver_node:
   ros__parameters: 
-    frame_id: laser                                         #激光坐标
+    frame_id: laser                                         #Laser coordinates
     group_ip: 224.1.1.2
     add_multicast: false 
-    device_ip: 192.168.1.200                                #雷达目的ip
-    device_ip_difop: 192.168.1.102                          #雷达源IP
-    msop_port: 2368                                         #雷达目的端口号
-    difop_port: 2369                                        #雷达源端口号
-    lidar_name: M10_P                                         #雷达选择:M10 M10_P M10_PLUS M10_GPS N10
-    ceil_increase: -1                                        #Lsm10*时改值应设置为-1
-    angle_disable_min: 0.0                                  #单角度裁剪开始值
-    angle_disable_max: 0.0                                  #单角度裁剪结束值
-    truncated_mode_: 0                                      #多角度裁剪开关：值为0时表示不使用多角度裁剪，默认为0
-                                                            #值为1表示使用多角度裁剪，同时angle_disable_min与angle_disable_max设为 0，角度值在/lslidar_driver.cc中修改
-    min_range: 0.0                                          #雷达接收距离最小值
-    max_range: 200.0                                        #雷达接收距离最大值
-    use_gps_ts: false                                       #雷达是否使用GPS授时
-    scan_topic: /scan                                       #设置激光数据topic名称
-    interface_selection: serial                             #接口选择:net 为网口,serial 为串口。
-    serial_port_: /dev/wheeltec_lidar                       #串口连接时的串口号
-#    pcap: /home/ls/work/2211/M10_P_gps.pcap                 #雷达是否使用pcap包读取功能
+    device_ip: 192.168.1.200                                #Radar target IP
+    device_ip_difop: 192.168.1.102                          #Radar source IP
+    msop_port: 2368                                         #Radar target port number
+    difop_port: 2369                                        #Radar source port number
+    lidar_name: M10_P                                       #Radar Selection:M10 M10_P M10_PLUS M10_GPS N10
+    ceil_increase: -1                                       #When Lsm10* is used, this value should be set to -1.
+    angle_disable_min: 0.0                                  #Single-angle cropping start value
+    angle_disable_max: 0.0                                  #Single-angle cropping end value
+    truncated_mode_: 0                                      #Multi-angle cropping switch: A value of 0 indicates that multi-angle cropping is not used; the default value is 0.
+                                                            #A value of 1 indicates the use of multi-angle clipping, while angle_disable_min and angle_disable_max are set to 0. The angle values ​​can be modified in /lslidar_driver.cc.
+    min_range: 0.0                                          #Minimum radar receiving distance
+    max_range: 200.0                                        #Maximum radar receiving range
+    use_gps_ts: false                                       #Does the radar use GPS timing?
+    scan_topic: /scan                                       #Set the laser data topic name
+    interface_selection: serial                             #Interface selection: net for network port, serial for serial port.
+    serial_port_: /dev/wheeltec_lidar                       #Serial port number when connecting via serial port
+#    pcap: /home/ls/work/2211/M10_P_gps.pcap                #Does the radar use pcap packet reading function?

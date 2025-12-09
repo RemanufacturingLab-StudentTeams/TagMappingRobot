@@ -31,9 +31,9 @@
 #include "lslidar_driver/lslidar_driver.h"
 #include <functional>
 
-int angle_min[]={135}; 	//雷达屏蔽角度，这里屏蔽角度为135°到225°，
-                        //如果要多角度屏蔽，如10~30，50~60，改为：angle_min[]={10，50};angle_max[]={30，60};
-int angle_max[]={225};  //修改后编译即可
+int angle_min[]={135}; 	//Radar shielding angle, here the shielding angle is 135° to 225°.，
+                        //To achieve multi-angle shielding, such as 10~30, 50~60, change it to: angle_min[]={10, 50}; angle_max[]={30, 60};
+int angle_max[]={225};  //After modification, compile.
 namespace lslidar_driver {
 
 static void my_hander(int sig)
