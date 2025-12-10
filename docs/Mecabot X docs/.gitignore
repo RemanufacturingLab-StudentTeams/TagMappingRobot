@@ -49,3 +49,5 @@
 .bak
 .mtc
 build/
+
+out/
