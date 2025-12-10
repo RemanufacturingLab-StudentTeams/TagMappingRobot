@@ -1,3 +1,9 @@
+/*
+ * Used to filter lidar data.
+ *
+ * @author Wouter van Velzen
+ * @author Jasper Waaijer
+ */
 #include <cmath>
 #include <memory>
 #include <limits>
