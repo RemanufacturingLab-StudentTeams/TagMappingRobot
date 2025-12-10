@@ -24,24 +24,31 @@ public:
         blind_2_start_ = 23.0 * M_PI / 180.0;
         blind_2_end_ = 43.0 * M_PI / 180.0;
 
+        std::string sub_topic = "/scan";
+        std::string pub_topic = "/scanned";
+
         // Abonneer op de ruwe LiDAR data
         subscription_ = this->create_subscription<sensor_msgs::msg::LaserScan>(
-            "/scan", 10, std::bind(&ScanFilter::callback, this, std::placeholders::_1));
+            sub_topic, 10, std::bind(&ScanFilter::callback, this, std::placeholders::_1));
 
         // Publiceer de gefilterde scan
-        publisher_ = this->create_publisher<sensor_msgs::msg::LaserScan>("/scanned", 10);
+        publisher_ = this->create_publisher<sensor_msgs::msg::LaserScan>(pub_topic, 10);
 
         RCLCPP_INFO(this->get_logger(),
-                    "ScanFilter actief — blindspot van %.1f° tot %.1f°",
+                    "LiDAR filter active — blindspot1 from %.1f° to %.1f°, blindspot 2 from %.1f° to %.1f°",
                     blind_1_start_ * 180.0 / M_PI,
-                    blind_1_end_ * 180.0 / M_PI);
+                    blind_1_end_ * 180.0 / M_PI,
+                    blind_2_start_ * 180.0 / M_PI,
+                    blind_2_end_ * 180.0 / M_PI);
+        RCLCPP_INFO(this->get_logger(),
+                    "Listening on topic: %s, broadcasting on topic: %s",
+                    sub_topic.c_str(),
+                    pub_topic.c_str());
     }
 
 private:
     void callback(const sensor_msgs::msg::LaserScan::SharedPtr msg)
     {
-        RCLCPP_INFO(this->get_logger(), "Callback function started!");
-
         auto filtered = sensor_msgs::msg::LaserScan();
         filtered.header = msg->header;
         filtered.angle_min = msg->angle_min;
