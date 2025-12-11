@@ -2,18 +2,28 @@
   "batch_count": 5,
   "batch_interval": 5.0,
   "max_size": 10,
-  "measurement_interval": 0.5,
-  "rfid_port": "COM3",
+  "measurement_interval": 2,
+  "rfid_port": "com3",
   "antenna_number": 3,
   "antenna_power": 3000,
+  "Z_value": 0,
   "mqtt": {
     "enabled": false,
-    "broker_host": "10.35.4.50",
+    "broker_host": "localhost",
     "broker_port": 1883,
-    "topic": "test/topic"
+    "topic": "HMI/topic"
+  },
+  "mecabot":{
+    "enabled": false,
+    "broker" : "localhost",
+    "topic" : "mecabot/topic"
   },
   "interactive": {
-    "antenna_position": true,
-    "ask_tag_position_on_first_seen": false
+    "antenna_position": false,
+    "ask_tag_position_on_first_seen": true,
+    "write_to_excel": false,
+    "raw_folder" : "./raw_data",
+    "RSSI_file"  : "rfid_data_",
+    "result_file": "results_"
   }
 }

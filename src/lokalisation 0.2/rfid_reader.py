@@ -3,6 +3,9 @@ import time
 import serial
 import serial.tools.list_ports
 from math import sqrt
+from datetime import datetime
+import os
+import pandas as pd
 
 TSL_BAUDRATE = 921600
 TSL_BYTESIZE = 8
@@ -10,8 +13,10 @@ TSL_PARITY = 'N'
 TSL_STOPBITS = 1
 TSL_TIMEOUT = 0.1
 
+save_directory = None
+
 class RFIDReader:
-    def __init__(self, rfid_port="/dev/ttyUSB0", antenna_power=300, antenna_number=3):
+    def __init__(self, rfid_port="/dev/ttyUSB0", antenna_power=3000, antenna_number=3):
         self.rfid_port = rfid_port
         self.antenna_power = antenna_power
         self.antenna_number = antenna_number
@@ -28,29 +33,40 @@ class RFIDReader:
         return checksum.to_bytes(2, byteorder='big')
 
     def send_command(self, command: bytes, timeout=0.2) -> str:
+        """
+        Send a command to the TSL module and read until EC: appears.
+        Option A: Safe + Fast.
+        """
         if not self.ser or not getattr(self.ser, "is_open", False):
             raise RuntimeError("Serial port not open")
     
-        # Send command
         cmd = command + self.calculate_checksum(command) + b'\x0A'
+    
+        # Flush to ensure clean response
         self.ser.reset_input_buffer()
         self.ser.write(cmd)
     
-        # Read until "EC:" appears (end of command)
         buffer = b""
         start = time.time()
     
         while True:
-            chunk = self.ser.read(256)
-            if chunk:
-                buffer += chunk
+            # Read everything available
+            n = self.ser.in_waiting
+            if n > 0:
+                buffer += self.ser.read(n)
+    
+                # Completed command response
                 if b"EC:" in buffer:
                     break
+    
+            # Timeout
             if time.time() - start > timeout:
                 break
     
-        return buffer.decode('utf-8', errors='ignore')
-
+            # prevent busy wait
+            time.sleep(0.001)
+    
+        return buffer.decode("utf-8", errors="ignore")
 
     def setup_connection(self):
         self.ser = serial.Serial(
@@ -64,8 +80,9 @@ class RFIDReader:
         )
     
         # FAST antenna init (no debug, no metadata)
-        cmd = f"$ir -p -anx{self.antenna_number} -dbx{hex(self.antenna_power)[2:]}"
-        lines = self.send_command(cmd.encode()).split("\n")
+        inventory_command = f'$ir -bnx0 -sex0 -tax0 -slx0 -dtx1 -anx{self.antenna_number} -dbx{hex(self.antenna_power)[2:]} -trxFFFF'
+
+        lines = self.send_command(inventory_command.encode()).split("\n")
     
         for line in lines:
             if line.startswith("EC:"):
@@ -86,6 +103,30 @@ class RFIDReader:
     @staticmethod
     def calculate_distance(x, y, z):
         return round(sqrt(x**2 + y**2 + z**2), 3)
+    
+    def save_to_excel(self, custom_dir=None, data=None):
+        timestamp = datetime.now().strftime('%d%m%y_%H%M%S')
+        filename = f'rfid_data_{timestamp}.xlsx'
+        
+        directory = custom_dir or save_directory or os.getcwd()
+        os.makedirs(directory, exist_ok=True)
+        filepath = os.path.join(directory, filename)
+
+        df = pd.DataFrame(data)
+
+        with pd.ExcelWriter(filepath, engine='openpyxl') as writer:
+            df.to_excel(writer, sheet_name='All Data', index=False)
+            for tag_id, group_data in df.groupby('Tag ID'):
+                sheet_name = str(tag_id)[:31]
+                group_data.to_excel(writer, sheet_name=sheet_name, index=False)
+
+        print(f'Raw data saved to {filename}')
+        
+    def set_save_directory(self, path)-> str:
+        """Set a custom directory for saving output files."""
+        global save_directory
+        save_directory = path
+        print(f"Save directory set to: {os.path.abspath(save_directory)}")
 
     def _extract_tag_details(self, lines):
         tags = []
@@ -125,15 +166,15 @@ class RFIDReader:
         distance = self.calculate_distance(ant_x, ant_y, ant_z)
         try:
             start = time.time()
-            cmd = f"$ba -go -anx{self.antenna_number} -dbx{hex(self.antenna_power)[2:]}"
-            raw = self.send_command(cmd.encode())
+            raw = self.send_command(('$ba -go'.encode()))
             print("RFID response time:", time.time() - start)
 
             lines = raw.split('\n')
             tags = self._extract_tag_details(lines)
+
             results = []
             for tag in tags:
-                print (f"detected ID:{tag['Tag ID']}")
+                #print (f"detected ID:{tag}")
                 results.append({
                     'Tag ID': tag['Tag ID'],
                     'RSSI': tag['RSSI'],
