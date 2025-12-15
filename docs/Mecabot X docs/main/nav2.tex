@@ -3,7 +3,7 @@
 
 This chapter shows an example on how to make the robot drive autonomously through an environment. For this to work you'll need an saved map as explained in the previous chapter.
 
-\subsection{Trouble shooting}
+\subsection{Troubleshooting}
 
 \subsubsection{NO RVIZ data}
 
@@ -21,9 +21,26 @@ If the talker and listener aren't working your laptop and the Mecabot are not on
 
 Advise: use Linux natively.
 
-\subsubsection{RVIZ is showing the wrong map}
+\subsubsection{RVIZ is showing the wrong map}\label{sec:nav2_no_map}
 
+Currently the wheeltec\_nav2 program ignores the ''-f'' tag. With the ''-f'' tag you can direct nav2 to use the map you've created using the na2\_map\_saver commando. 
 
-Navigation 2 info.
+The nav2\_map\_saver commando created two files; ''map1.pgm'' and ''map1.yaml''. (The names are different depending on how you named them.) These files need to be moved to a specific directory so nav2\_map\_saver can use them.
+
+Move the map to: ''\texttt{\~{}/wheeltec\_ros2/install/wheeltec\_nav2/share/wheeltec\_nav2/map}''. The files need to be renamed to: ''\texttt{WHEELTEC.pgm}'' and ''\texttt{WHEELTEC.yaml}''. (The files are case sensitive.)
+
+In the YAML file you'll also need to rename the image to ''\texttt{WHEELTEC.pgm}''. Below shows an example of what the YAML file should look like.
+
+\begin{tcolorbox}[colback=NavajoWhite]
+\begin{minted}{yaml}
+image: WHEELTEC.pgm
+mode: trinary
+resolution: 0.05
+origin: [-10, -10, 0]
+negate: 0
+occupied_thresh: 0.65
+free_thresh: 0.196
+\end{minted}
+\end{tcolorbox}
 
 \newpage
