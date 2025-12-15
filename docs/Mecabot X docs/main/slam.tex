@@ -1,70 +1,124 @@
 % !TeX spellcheck = en_GB
-\section{SLAM}
-In robotics, SLAM is the term given to \textbf{S}imultaneous \textbf{L}ocalization \textbf{a}nd \textbf{M}apping algorithms\cite{slam_toolbox, slam_wiki}. As the name suggests, this allows the robot to build a map of an unknown environment, as well as improving the map with new features over time. Localization refers to the robot determining its position in relation to the map, termed the global frame. This can be compared to a submarine using its radar sensor to continuously map the terrain of the ocean.
+\section{Creating a map}\label{sec:create_map}
+For the Mecabot X to travel autonomously it needs a map. This can be done in three steps.
+\begin{itemize}
+	\item Start up cartographer.
+	\item Drive around (creating the map).
+	\item Save the map.
+\end{itemize}
 
-SLAM is also a fundamental aspect of robotic navigation, allowing the robot to plan paths from its current pose to any pose on the global map. Rosbot is a suitable platform to investigate the fundamentals of SLAM and its real-life applications, such as autonomous exploration and self driving vehicles. %TODO: Source? What is ROSbot?
+Cartographer is a program that is created by the Roboworks team. It uses SLAM to map it's surroundings. In robotics, SLAM is the term given to \textbf{S}imultaneous \textbf{L}ocalization \textbf{a}nd \textbf{M}apping algorithms\cite{slam_toolbox, slam_wiki}. As the name suggests, this allows the robot to build a map of an unknown environment, as well as improving the map with new features over time. Localization refers to the robot determining its position in relation to the map, termed the global frame. This can be compared to a submarine using its radar sensor to continuously map the terrain of the ocean.
 
-For the subsequent steps, Cartographer is utilized. Cartographer is a system and facilitates real-time 2D and 3D simultaneous localization and mapping (SLAM) across various platforms and sensor configurations. To initiate the Carographer node, execute the following ROS program:
+This chapter assumes you can already connect to the robot and have setup a ''\texttt{ROS\_DOMAIN\_ID}''. If not look into chapter \ref{sec:setup} and \ref{sec:ROS_ID}.
+
+If a command needs to be run on the laptop the ''script box'' will be \colorbox{Gainsboro}{grey}. If it needs to be run on the Mecabot the ''script box'' will be \colorbox{NavajoWhite}{yellow}.
+
+\subsection{Start cartographer}
+
+Run the following command on the Mecabot to start up cartographer.
 
 \begin{tcolorbox}[colback=NavajoWhite]
-\begin{minted}{bash}
+	\begin{minted}{bash}
 ros2 launch wheeltec_cartographer cartographer.launch.py
 \end{minted}
 \end{tcolorbox}
 
+\textbf{Note: this will start the LiDAR without blind spots. If you want to start with blind spots, replace: ''\texttt{cartographer.launch.py}'' with: ''\texttt{cartographer\_w\_blindspots.launch.py}''.}
+
 Next you can open RVIZ on your laptop to see the live cartographer data.
 
 \begin{tcolorbox}[colback=Gainsboro]
-\begin{minted}{bash}
+	\begin{minted}{bash}
 ros2 launch wheeltec_rviz2 wheeltec_rviz.launch.py
 \end{minted}
 \end{tcolorbox}
 
-%TODO picture of working RVIZ
+Figure \ref{fig:RVIZ_Cartographer} shows the current map in RVIZ.
 
-By utilizing one of the movement packages, (see chapter \ref{sec:controlling}) the operator can navigate the robot and illuminate the surrounding map.
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.9\linewidth]{./pictures/RVIZ_cartographer.png}
+	\caption{Cartographer on RVIZ2}
+	\label{fig:RVIZ_Cartographer}
+\end{figure}
 
-The map being visualized can take some time so move slowly.
+\subsection{Driving around}
 
-When done creating the map you can save the map. This is needed to later use it with the Navigation 2 packages. Open a new terminal and type the following command:
+By utilizing one of the movement packages, (see chapter \ref{sec:controlling}) the operator can navigate the robot and illuminate the surrounding map. Using the wired controller is the easiest way.
+
+The map being visualized can take some time so move slowly. (going sideways is inaccurate. Try avoid this movement.)
+
+\subsection{Saving the map}
+
+When done creating the map, you can save the map. This map can be used by nav2 to to drive autonomously. Open a new terminal (on the Mecabot) and type the following command:
 
 \begin{tcolorbox}[colback=NavajoWhite]
-\begin{minted}{bash}
+	\begin{minted}{bash}
 ros2 run nav2_map_server map_saver_cli -f <directory path>
 \end{minted}
 \end{tcolorbox}
 
-This command initiates the execution of a ROS2 node, nav2\_map\_server specifies the package containing the node, and map\_saver\_cli is the node responsible for saving the map\cite{nav2_saver}. The ''\texttt{-f}'' flag followed by \texttt{<directory path>} indicates the file path where the map should be saved. For example, to save the map to a directory named maps in the home directory, \texttt{<directory path>} would be replace with: ''~/maps/my\_map''.
+This command initiates the execution of a ROS2 node, nav2\_map\_server specifies the package containing the node, and map\_saver\_cli is the node responsible for saving the map\cite{nav2_saver}. The ''\texttt{-f}'' flag followed by \texttt{<directory path>} indicates the file path where the map should be saved. For example, to save the map to a directory named maps in the home directory, \texttt{<directory path>} would be replace with: ''\texttt{\~{}/maps/my\_map}''.
+
+Figure \ref{fig:map_saver_succes} shows the output of the map being saved.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.9\linewidth]{./pictures/map_saver_correct.png}
+	\caption{Successfully saved map}
+	\label{fig:map_saver_succes}
+\end{figure}
 
 \subsection{Trouble shooting}
 
-\subsubsection{Cartographer is not found}
+\subsubsection{Cartographer command is not found}
 
 Is your ROS environment sourced?
 
 \begin{tcolorbox}[colback=NavajoWhite]
-\begin{minted}{bash}
+	\begin{minted}{bash}
 source ~/wheeltec_ros2/install/setup.bash
 \end{minted}
 \end{tcolorbox}
 
-source wheeltec
-
 \subsubsection{Cartographer is not working}
 
+\paragraph{Check LiDAR}
 Check LiDAR is functional.
 
 % ros2 launch turn_on_wheeltec_robot wheeltec_lidar.launch.py
+
+\begin{tcolorbox}[colback=NavajoWhite]
+	\begin{minted}{bash}
+ros2 launch turn_on_wheeltec_robot wheeltec_lidar.launch.py
+	\end{minted}
+\end{tcolorbox}
+
+\paragraph{Terminal hangs}
+Terminal shows the following message: ''\texttt{Waiting for robot\_description to be published on the robot\_description topic...}'' and no new text.
+
+Sometimes cartographer doesn't start correctly. retry starting the program. If that doesn't work reboot the robot using the following command:
+
+\begin{tcolorbox}[colback=NavajoWhite]
+	\begin{minted}{bash}
+sudo shutdown -r now
+	\end{minted}
+\end{tcolorbox}
+
 
 \subsubsection{NO RVIZ data}
 
 Does your laptop and the Mecabot have the same ''\texttt{ROS\_DOMAIN\_ID}''?
 
-''export rod domain id''
+\begin{tcolorbox}[colback=Gainsboro]
+\begin{minted}{bash}
+export ROS_DOMAIN_ID=10
+\end{minted}
+\end{tcolorbox}
 
 Check if the simple ROS demo\_node\_cpp talker and listener is working. (See chapter \ref{sec:ROS_ID}.)
 
-If the talker en listener aren't working your laptop and the Mecabot are not on the same network. (Using WSL or using a VM)
+If the talker and listener aren't working your laptop and the Mecabot are not on the same network. (Using WSL or a VM.)
 
 Advise: use Linux natively.
 
@@ -74,8 +128,17 @@ Does your new terminal have the same ''\texttt{ROS\_DOMAIN\_ID}'' as the cartogr
 
 \paragraph{Error message}
 
-Error can't rotate map %TODO: actual error mesage. + picture error message
+sometimes saving the map gives the following error message: ''\textcolor{Red}{Failed to spin map subscription}''. Figure \ref{fig:map_saver_fail} shows the failed output. This error has multiple solutions.
 
-The ''\texttt{-f}'' tag doesn't always work. Try a different directory or name or remove the tag all together. If no tag is given the program will save with a random name in the current directory. Sometimes you just need to retry without doing anything different and it just works.
+The ''\texttt{-f}'' tag doesn't always work. Try a different directory or name or remove the tag all together. If no tag is given the program will save with a random name in the current directory. 
+
+Sometimes there is no reason. If you retry it again without doing anything different it just works.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.9\linewidth]{./pictures/map_saver_incorrect.png}
+	\caption{Failed saved map}
+	\label{fig:map_saver_fail}
+\end{figure}
 
 \newpage

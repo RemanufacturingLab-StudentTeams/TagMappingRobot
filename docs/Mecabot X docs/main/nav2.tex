@@ -1,5 +1,28 @@
 % !TeX spellcheck = en_GB
-\section{Navigation 2}
+\section{Autonomous driving}\label{sec:autonomous}
+
+This chapter shows an example on how to make the robot drive autonomously through an environment. For this to work you'll need an saved map as explained in the previous chapter.
+
+\subsection{Trouble shooting}
+
+\subsubsection{NO RVIZ data}
+
+Does your laptop and the Mecabot have the same ''\texttt{ROS\_DOMAIN\_ID}''?
+
+\begin{tcolorbox}[colback=Gainsboro]
+	\begin{minted}{bash}
+export ROS_DOMAIN_ID=10
+	\end{minted}
+\end{tcolorbox}
+
+Check if the simple ROS demo\_node\_cpp talker and listener is working. (See chapter \ref{sec:ROS_ID}.)
+
+If the talker and listener aren't working your laptop and the Mecabot are not on the same network. (Using WSL or a VM.)
+
+Advise: use Linux natively.
+
+\subsubsection{RVIZ is showing the wrong map}
+
 
 Navigation 2 info.
 
