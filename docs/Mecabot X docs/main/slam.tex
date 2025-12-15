@@ -24,7 +24,7 @@ ros2 launch wheeltec_cartographer cartographer.launch.py
 \end{minted}
 \end{tcolorbox}
 
-\textbf{Note: this will start the LiDAR without blind spots. If you want to start with blind spots, replace: ''\texttt{cartographer.launch.py}'' with: ''\texttt{cartographer\_w\_blindspots.launch.py}''.}
+\textbf{Note: this will start the LiDAR without blind spots. If you want to start with blind spots, replace: \\ \highLight[LightGrey]{''\texttt{cartographer.launch.py}''} with: \highLight[LightGrey]{''\texttt{cartographer\_w\_blindspots.launch.py}''}.}\\
 
 Next you can open RVIZ on your laptop to see the live cartographer data.
 
@@ -34,7 +34,7 @@ ros2 launch wheeltec_rviz2 wheeltec_rviz.launch.py
 \end{minted}
 \end{tcolorbox}
 
-Figure \ref{fig:RVIZ_Cartographer} shows the current map in RVIZ.
+Figure \ref{fig:RVIZ_Cartographer} shows the generated map in RVIZ.
 
 \begin{figure}[H]
 	\centering
@@ -129,11 +129,16 @@ Does your new terminal have the same ''\texttt{ROS\_DOMAIN\_ID}'' as the cartogr
 
 \paragraph{Error message}
 
-sometimes saving the map gives the following error message: ''\textcolor{Red}{Failed to spin map subscription}''. Figure \ref{fig:map_saver_fail} shows the failed output. This error has multiple solutions.
+sometimes saving the map gives the following error message: ''\textcolor{Red}{\texttt{Failed to spin map subscription}}''. Figure \ref{fig:map_saver_fail} shows the failed output. This error has two possible solutions.
 
-The ''\texttt{-f}'' tag doesn't always work. Try a different directory or name or remove the tag all together. If no tag is given the program will save with a random name in the current directory. 
+\begin{enumerate}
+	\item The ''\texttt{-f}'' tag doesn't always work. Try a different directory, name or remove the tag all together.
+	\begin{itemize}
+		\item If no tag is given the program will save with a random name in the current directory.
+	\end{itemize}
+	\item Sometimes there is no reason. If you retry it again without doing anything different it just works.
+\end{enumerate}
 
-Sometimes there is no reason. If you retry it again without doing anything different it just works.
 
 \begin{figure}[H]
 	\centering

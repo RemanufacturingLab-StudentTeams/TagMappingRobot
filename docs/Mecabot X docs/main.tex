@@ -1,6 +1,8 @@
 % !TeX spellcheck = en_GB
 \documentclass[11pt,a4paper]{article}
 
+\usepackage{fontspec}
+
 \usepackage[english]{babel}
 \usepackage[table,xcdraw, svgnames]{xcolor}
 \usepackage[margin=3cm, includefoot]{geometry}
@@ -10,14 +12,17 @@
 
 \usepackage{ragged2e}
 \usepackage{hhline}
-\usepackage{courier}
+%\usepackage{courier}
+
+% Set fonts
+\setmainfont{Noto Sans}[BoldFont=Noto Sans Bold, ItalicFont=Noto Sans Italic]
+\setmonofont{Noto Sans Mono}[BoldFont=Noto Sans Mono Bold, ItalicFont=Noto Sans Italic]
+\setsansfont{Noto Sans}
 
 % To display code
 \usepackage{minted}
 \usepackage{tcolorbox}
 \usepackage{etoolbox}
-%\BeforeBeginEnvironment{minted}{\begin{tcolorbox}}%
-%\AfterEndEnvironment{minted}{\end{tcolorbox}}%
 
 \usepackage{hyperref}
 \hypersetup{
@@ -33,6 +38,12 @@
 }
 
 \usepackage{csquotes}
+
+\usepackage{vhistory}
+
+% Used for highlight colors
+\usepackage{luacolor}
+\usepackage{lua-ul}
 
 % References
 \usepackage[backend=biber, style=ieee]{biblatex}

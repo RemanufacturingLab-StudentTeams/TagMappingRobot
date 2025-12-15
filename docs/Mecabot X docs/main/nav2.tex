@@ -1,7 +1,26 @@
 % !TeX spellcheck = en_GB
 \section{Autonomous driving}\label{sec:autonomous}
 
-This chapter shows an example on how to make the robot drive autonomously through an environment. For this to work you'll need an saved map as explained in the previous chapter.
+This chapter shows an example on how to make the robot drive autonomously through an environment. For this to work you'll need a saved map as explained in the previous chapter.
+
+The Mecabot X uses the ROS Navigation2 Stack, commonly referred to as NAV2. NAV2 is a comprehensive framework designed for autonomous navigation in robots using ROS2.
+
+NAV2 provides a robust set of tools and functionalities for autonomous navigation. It includes perception capabilities that convert sensor data into an environmental model, allowing the robot to understand and interact with its surroundings. The planning component computes paths through the environment, ensuring they are kinematically feasible for the robot.
+
+To use NAV2 you need ROS2 and NAV2 installed on your pc and the Mecabot. You can follow appendix \ref{sec:appendix_setup} and \ref{sec:appendix_compile} to download the correct packages.
+
+\subsection{Run Navigation 2}
+The main purpose of the \texttt{wheeltecc\_nav2} package is to implement 2D navigation and other extended functions on the robot side. It uses the SmacPlannerHybrid as its global planner, due to its compatibility with Differntial, omnidirectional and Ackermann robots. To start the nav2 package, run the following command on the robot:
+
+\begin{tcolorbox}[colback=NavajoWhite]
+	\begin{minted}{bash}
+source ~/wheeltec_ros2/install/setup.bash
+ros2 launch wheeltec_nav2 wheeltec_nav2.launch.py 
+maps:=<map location>
+	\end{minted}
+\end{tcolorbox}
+
+
 
 \subsection{Troubleshooting}
 
@@ -23,11 +42,11 @@ Advise: use Linux natively.
 
 \subsubsection{RVIZ is showing the wrong map}\label{sec:nav2_no_map}
 
-Currently the wheeltec\_nav2 program ignores the ''-f'' tag. With the ''-f'' tag you can direct nav2 to use the map you've created using the na2\_map\_saver commando. 
+Currently the wheeltec\_nav2 program ignores the ''maps:='' tag. With the ''maps:='' tag you can direct nav2 to use the map you've created using the na2\_map\_saver commando. 
 
 The nav2\_map\_saver commando created two files; ''map1.pgm'' and ''map1.yaml''. (The names are different depending on how you named them.) These files need to be moved to a specific directory so nav2\_map\_saver can use them.
 
-Move the map to: ''\texttt{\~{}/wheeltec\_ros2/install/wheeltec\_nav2/share/wheeltec\_nav2/map}''. The files need to be renamed to: ''\texttt{WHEELTEC.pgm}'' and ''\texttt{WHEELTEC.yaml}''. (The files are case sensitive.)
+Move the files to:  \\ \highLight[LightGrey]{''\texttt{\~{}/wheeltec\_ros2/install/wheeltec\_nav2/share/wheeltec\_nav2/map}''}. \\ The files need to be renamed to: \highLight[LightGrey]{''\texttt{WHEELTEC.pgm}''} and \highLight[LightGrey]{''\texttt{WHEELTEC.yaml}''}. (The filenames are case sensitive.)
 
 In the YAML file you'll also need to rename the image to ''\texttt{WHEELTEC.pgm}''. Below shows an example of what the YAML file should look like.
 

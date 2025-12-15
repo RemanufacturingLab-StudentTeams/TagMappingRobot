@@ -1,0 +1,3 @@
+\def \vhCurrentVersion {2.0}
+\def \vhCurrentDate {25.12.31}
+\newsetsimple \vhAllAuthorsSet { Alireza Beheshti|Rufus Fraanje|Wouter van Velzen}

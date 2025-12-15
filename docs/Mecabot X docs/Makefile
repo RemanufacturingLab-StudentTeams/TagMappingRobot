@@ -9,7 +9,7 @@ OUTDIR = out
 DISTDIR = dist
 
 LATEXMK = latexmk
-LATEXMK_OPTS = -xelatex -shell-escape -outdir=$(OUTDIR) \
+LATEXMK_OPTS = -lualatex -shell-escape -outdir=$(OUTDIR) \
                -interaction=nonstopmode -synctex=1
 
 TEX_SRCS = $(shell find . -name "*.tex")

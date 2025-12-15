@@ -1,0 +1,14 @@
+\begin {longtable}{@{}ll>{\hsize =\vhAuthorColWidth }X>{\hsize =\vhChangeColWidth }X@{}}
+\textbf {\vhversionname }
+ & \textbf {\vhdatename }
+ & \textbf {\vhauthorname }
+ & \textbf {\vhchangename }\\[1ex]
+1.0
+ & 24.12.01
+ & \listset {Rufus Fraanje| Alireza Beheshti}
+ & Initial release\\
+2.0
+ & 25.12.31
+ & \listset {Wouter van Velzen}
+ & Added more chapters and troubleshooting steps\\
+\end {longtable}
