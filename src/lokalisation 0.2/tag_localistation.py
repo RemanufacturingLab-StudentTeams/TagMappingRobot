@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.optimize import fsolve
+from scipy.interpolate import interp1d
 from shapely.geometry import MultiPolygon, Polygon as ShapelyPolygon
 from shapely.affinity import rotate
 
@@ -9,16 +9,37 @@ import db
 # Constants
 # -------------------
 ALPHA = 90  # Angle in degrees
-VECTOR_LENGTH = 0.2  # Arrow length for antenna orientation
-PLOT_LIMITS = (-0.5, 4)
-GRID_STEP = 0.5
 
-distance_cache = {}
+MIN_POLY_AREA = 1e-5 # ~0.1 cm²
+POLY_SHAPE_RATIO = 8 # 
+MIN_RSSI = -85
+MAX_RSSI = -20
+DEFAULT_ELLIPSE = [0,1,1] #rotation(deg), width(m), heigt(m)
+MAX_VARIANCE_TRESHOLD = 6
 
 # -------------------
 # Utility Functions
 # -------------------
-##Get the average of the rms    
+def validate_globals():
+    assert 0 < ALPHA <= 180
+    assert MIN_POLY_AREA > 0
+    assert POLY_SHAPE_RATIO > 0 
+    assert 0 > MAX_RSSI
+    assert MIN_RSSI < MAX_RSSI
+    assert len(DEFAULT_ELLIPSE) == 3
+    assert MAX_VARIANCE_TRESHOLD >= 1
+
+def init_globals(cfg):
+    global MIN_POLY_AREA, POLY_SHAPE_RATIO, MIN_RSSI, MAX_RSSI, DEFAULT_ELLIPSE, MAX_VARIANCE_TRESHOLD
+    MIN_POLY_AREA = cfg["MIN_POLY_AREA"]
+    POLY_SHAPE_RATIO = cfg["POLY_SHAPE_RATIO"] 
+    MIN_RSSI = cfg["MIN_RSSI"]
+    MAX_RSSI = cfg["MAX_RSSI"]
+    DEFAULT_ELLIPSE = cfg["DEFAULT_ELLIPSE"]
+    MAX_VARIANCE_TRESHOLD = cfg["MAX_VARIANCE_TRESHOLD"]
+    validate_globals()
+
+##Get the average of the rms   
 def get_rms_rssi(rssi):
     """
     Calculate RMS based on the given RSSI value using the formula:
@@ -31,14 +52,10 @@ def rssi_distance(d):
     return (-30.625214*d**0 + -66.049565*d**1 + 47.932897*d**2 +
             6.934334*d**3 + -23.319914*d**4 + 9.552617*d**5 + -1.222853*d**6)
 
-def rssi_distance_deriv(d):
-    """Derivative of the RSSI-distance polynomial."""
-    return (-66.049565*d**0 + 2*47.932897*d**1 + 3*6.934334*d**2 +
-            -4*23.319914*d**3 + 5*9.552617*d**4 + -6*1.222853*d**5)
-
 def rssi_angle(phi):
     """Calculate RSSI based on angle."""
-    return 0.038186*phi - 0.003704 * phi**2
+    phi = np.asarray(phi)
+    return 0.038186 * phi - 0.003704 * phi**2
 
 def enclosing_ellipse(geometry, scale=1.1):
     """
@@ -67,20 +84,26 @@ def enclosing_ellipse(geometry, scale=1.1):
 
     return rotation_deg, a, b
 
+d_table = np.linspace(0, 10, 10001)   # 1 mm steps
+rssi_table = rssi_distance(d_table)
+
+# Ensure monotonic decreasing RSSI
+# If needed, sort by RSSI
+order = np.argsort(rssi_table)
+rssi_sorted = rssi_table[order]
+d_sorted = d_table[order]
+
+# Build interpolation function: RSSI -> distance
+inverse_rssi = interp1d(
+    rssi_sorted,
+    d_sorted,
+    bounds_error=False,
+    fill_value="extrapolate",
+    assume_sorted=True
+)
+
 def solve_distance(rssi, init=1.5):
- 
-    key = round(rssi, 2)
- 
-    if key in distance_cache:
-           return distance_cache[key]
-    """Solve for distance given RSSI using fsolve."""
-    def equation(d):
-        return rssi - rssi_distance(d)
-    def deriv(d):
-        return -rssi_distance_deriv(d)
-    sol = fsolve(equation, init, fprime=deriv)[0]
-    distance_cache[key] = sol
-    return sol
+    return float(inverse_rssi(rssi))
 
 def rotate_points(x, y, angle_deg):
     """Rotate points (x, y) by angle_deg around the origin."""
@@ -93,21 +116,25 @@ def translate_points(x, y, ant_x, ant_y):
     """Translate points (x, y) to antenna location (ant_x, ant_y)."""
     return x + ant_x, y + ant_y
 
-def plot_curve(rssi_val, ant_x, ant_y, angle_deg, angles, angles_rad, style='-', label=None, color=None):
+def plot_curve(rssi_val, ant_x, ant_y, angle_deg, angles, angles_rad):
     """Calculate and plot a single signal curve for an antenna location."""
-    rssi_phi = np.array([rssi_angle(phi) for phi in angles])
+    rssi_phi = rssi_angle(angles)
     signal_loss = -rssi_phi
-    ##A vector of RSSI values at different angles
     rssi_a = rssi_val + signal_loss
-    distances = np.array([solve_distance(rssi) for rssi in rssi_a])
-    to_keep = distances > 0
-    angles_rad_limited = angles_rad[to_keep]
-    distances_limited = distances[to_keep]
+    distances = inverse_rssi(rssi_a)
+    
+    mask = (distances > 0) & np.isfinite(distances)
+    if not np.any(mask):
+        return np.array([]), np.array([])
+    
+    angles_rad_limited = angles_rad[mask]
+    distances_limited = distances[mask]
     x = distances_limited * np.sin(angles_rad_limited)
     y = distances_limited * np.cos(angles_rad_limited)
     x_rot, y_rot = rotate_points(x, y, angle_deg)
     x_trans, y_trans = translate_points(x_rot, y_rot, ant_x, ant_y)
     return x_trans, y_trans
+
 
 def make_polygon_points(x_upper, y_upper, x_lower, y_lower):
     """Helper to create polygon points for intersection/hatching."""
@@ -123,64 +150,35 @@ def create_single_plot(rssi_received, ant_x, ant_y, beta):
     rms_rssi = get_rms_rssi(rssi_received)
     upper_rssi = rssi_received + rms_rssi
     lower_rssi = rssi_received - rms_rssi
-    x_upper, y_upper = plot_curve(upper_rssi, ant_x, ant_y, beta, angles, angles_rad, '-', 'Upper bound')
-    x_lower, y_lower = plot_curve(lower_rssi, ant_x, ant_y, beta, angles, angles_rad, '-', 'Lower bound')
+    x_upper, y_upper = plot_curve(upper_rssi, ant_x, ant_y, beta, angles, angles_rad)
+    x_lower, y_lower = plot_curve(lower_rssi, ant_x, ant_y, beta, angles, angles_rad)
     return x_upper, y_upper, x_lower, y_lower
 
-def find_most_common_intersection(shapely_polygons):
-    """Find the most common intersection area among polygons."""
-    from itertools import combinations
-    if len(shapely_polygons) < 2:
+def find_core_intersection(polygons, min_area=0.0001):
+    """
+    Find the core area where most polygons overlap.
+    polygons: list of ShapelyPolygon
+    min_area: minimal polygon area to consider
+    """
+    if not polygons:
         return None
-    intersection_regions = []
-    for num_polygons in range(len(shapely_polygons), 1, -1):
-        for poly_indices in combinations(range(len(shapely_polygons)), num_polygons):
-            current_polygons = [shapely_polygons[i] for i in poly_indices]
-            current_intersection = current_polygons[0]
-            for poly in current_polygons[1:]:
-                if current_intersection.is_empty:
-                    break
-                current_intersection = current_intersection.intersection(poly)
-            if not current_intersection.is_empty:
-                intersection_regions.append({
-                    'area': current_intersection,
-                    'count': num_polygons,
-                    'indices': poly_indices
-                })
-        if intersection_regions:
-            break
-    if not intersection_regions:
+    
+    # Start with polygon with largest area as core
+    polygons_sorted = sorted(polygons, key=lambda p: p.area, reverse=True)
+    core = polygons_sorted[0]
+    used = {0}
+
+    # Iteratively intersect with other polygons
+    remaining = [(i, p) for i, p in enumerate(polygons_sorted[1:], start=1)]
+    for i, p in remaining:
+        intersection = core.intersection(p)
+        if not intersection.is_empty and intersection.area >= min_area:
+            core = intersection
+            used.add(i)
+
+    if core.is_empty:
         return None
-    most_common = max(intersection_regions, key=lambda x: x['count'])
-    core_area = most_common['area']
-    max_intersection_area = 0
-    best_area_index = most_common['indices'][0]
-    for i in most_common['indices']:
-        intersection = shapely_polygons[i].intersection(core_area)
-        if not intersection.is_empty:
-            area = intersection.area
-            if area > max_intersection_area:
-                max_intersection_area = area
-                best_area_index = i
-    current_intersection = shapely_polygons[best_area_index]
-    used_indices = {best_area_index}
-    remaining_polygons = [(i, poly) for i, poly in enumerate(shapely_polygons) if i not in used_indices]
-    while remaining_polygons and not current_intersection.is_empty:
-        best_next = None
-        best_area = 0
-        best_index = -1
-        for i, poly in remaining_polygons:
-            intersection = poly.intersection(current_intersection)
-            if not intersection.is_empty and intersection.area > best_area:
-                best_area = intersection.area
-                best_next = poly
-                best_index = i
-        if best_next is None:
-            break
-        current_intersection = current_intersection.intersection(best_next)
-        used_indices.add(best_index)
-        remaining_polygons = [(i, poly) for i, poly in remaining_polygons if i not in used_indices]
-    return current_intersection
+    return core
 
 def process_measurements(tag_id, measurements):
     """
@@ -201,32 +199,64 @@ def process_measurements(tag_id, measurements):
     if len(groups) < 2:
         return None
     
-    all_data = []
+    shapely_polygons = []
     # for each distance group compute rssi mean and a representative antenna row
     for dist_key in sorted(groups.keys()):
         grp = groups[dist_key]
+        if len(grp) < 2:
+            print (f"rejecting distance group {dist_key} for tag {tag_id} only has {len(grp)} measurment \n skipping to next group")
+            continue
+        
+        # Reject inconsistent RSSI
+        rssi_vals = [x['RSSI'] for x in grp]
+        if np.std(rssi_vals) > MAX_VARIANCE_TRESHOLD:  # tuned threshold
+            print (f"variance inside group {dist_key} for tag (tag_id) to high: {rssi_vals} \n skipping to next group ")
+            continue
+        
         # choose row with max RSSI as representative
-        max_row = max(grp, key=lambda x: x.get('RSSI', -999))
+        try:
+            max_row = max(grp, key=lambda x: x.get('RSSI', -999))
+        except Exception as e:
+            print(f"error calculting max_row for tag {tag_id}: {e}\n Skipping to next group")
+            continue
         mean_rssi = sum([x.get('RSSI', 0.0) for x in grp]) / len(grp)
         ant_x = float(max_row['Antenna X [m]'])
         ant_y = float(max_row['Antenna Y [m]'])
         beta = float(max_row['Antenna Rot Z [deg]'])
-        curves = create_single_plot(mean_rssi, ant_x, ant_y, beta)
-        all_data.append((mean_rssi, ant_x, ant_y, beta, curves))
+        # Ignore absurd RSSI values
+        if mean_rssi < MIN_RSSI or mean_rssi > MAX_RSSI:
+            print(f"Rejcted RSSI {mean_rssi} to high or to low, RSSI should between {MIN_RSSI} and {MAX_RSSI}\n Skipping to next group")
+            continue
+        try:
+            curves = create_single_plot(mean_rssi, ant_x, ant_y, beta)
+        except Exception as e:
+            print (f"error creating single plot for tag {tag_id}: {e}\n Skipping to next group")
+            continue
 
-    shapely_polygons = []
-    for _, _, _, _, curves in all_data:
         x_upper, y_upper, x_lower, y_lower = curves
         pts = make_polygon_points(x_upper, y_upper, x_lower, y_lower)
-        shapely_polygons.append(ShapelyPolygon(pts))
+        poly = ShapelyPolygon(pts)
+        # Reject polygons that are too thin or too tiny
+        if poly.area < MIN_POLY_AREA:   # ~0.1 cm²
+            print (f"Rejected poly:{poly} for tag {tag_id} area to small\n Skipping to next group")
+            continue
+        
+        # Reject polygons with weird geometry
+        if poly.length / (2 * np.sqrt(np.pi * poly.area)) > POLY_SHAPE_RATIO:
+            # Perimeter too large for the area: suspicious shape
+            print (f"Rejected poly:{poly} for tag {tag_id} weird shape\n Skipping to next group")
+            continue
+        shapely_polygons.append(poly)
 
     prev = db.get_polygon(tag_id)
     if prev:
         shapely_polygons.append(prev)
 
-    common = find_most_common_intersection(shapely_polygons)
+    common = find_core_intersection(shapely_polygons)
     if common is None or common.is_empty:
-        return None
+        print (f"No common intersection for tag {tag_id}")
+        return(None)
+        
 
     db.save_polygon(tag_id, common)
 
@@ -234,7 +264,11 @@ def process_measurements(tag_id, measurements):
         common = min(common.geoms, key=lambda p: p.area)
 
     centroid = common.centroid
-    rotation, width, height = enclosing_ellipse(common)
+    try:
+        rotation, width, height = enclosing_ellipse(common)
+    except Exception as e:
+        print (f"error calculting ellipse for tag {tag_id}: {e}\n using default ellipse")
+        rotation, width, height = DEFAULT_ELLIPSE
 
     return {
         "ID": tag_id,

@@ -12,15 +12,16 @@ import pandas as pd
 
 class Processor(threading.Thread):
     def __init__(self, work_queue: queue.Queue,
-                 batch_count=5, batch_interval=5.0, mqtt_config=None, interactive=None, write_folder='./raw_data'):
+                 batch_count=5, mqtt_config=None, interactive=None, write_folder='./raw_data',lokalisation_config=None):
         super().__init__(daemon=True)
         self.q = work_queue
         self.batch_count = batch_count
-        self.batch_interval = batch_interval
+        assert self.batch_count > 1
         self._stop = threading.Event()
         self.mqtt_config = mqtt_config
         self.interactive = interactive
         self.write_folder = write_folder
+        tla.init_globals(lokalisation_config)
         
         # setup mqtt if enabled
         if (self.mqtt_config.get('enabled')):
@@ -29,13 +30,15 @@ class Processor(threading.Thread):
                 self.mqtt_client = mqtt.Client(callback_api_version=mqtt.CallbackAPIVersion.VERSION1)
                 self.mqtt_client.connect(self.mqtt_config.get('broker_host'), self.mqtt_config.get('broker_port'), 60)
             except Exception as e:
-                print (f"error connecting to broker:{e} ")
-                
+                print (f"error connecting to broker:{e} ")                
+        
     def stop(self):
         
         if self.mqtt_config.get('enabled'):
             self.mqtt_client.disconnect()
+            print ("mqtt HMI: disconnected.")
         self._stop.set()
+        print ("processor: Stopped")
         
     def save(self, data, name):
         timestamp = datetime.now().strftime('%d%m%y_%H%M%S')
@@ -76,6 +79,9 @@ class Processor(threading.Thread):
                 end = time.time()
                 print (f"procesing took {end - start}seconds")
                 cycles = []
+        if cycles:
+            print("Processor: flushing remaining cycles before shutdown")
+            self._process_batch(cycles)
 
 
 
@@ -99,11 +105,12 @@ class Processor(threading.Thread):
 
         if results:
             self._publish_batch(results)
-            if self.interactive.get('write_to_excel'):
-                data = []
+        if self.interactive.get('write_to_excel'):
+            data = []
+            if results:
                 self.save(results, self.interactive.get('result_file'))
-                for cycle in cycles:
-                    for m in cycle["cycle"]:
-                        data.append(m)
-                self.save(data, self.interactive.get('RSSI_file'))
+            for cycle in cycles:
+                for m in cycle["cycle"]:
+                    data.append(m)
+            self.save(data, self.interactive.get('RSSI_file'))
             print("Processor: finished batch of", len(results), "tags")

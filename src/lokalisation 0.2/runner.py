@@ -3,6 +3,7 @@ import json
 import queue
 import time
 import sys
+import numpy as np
 import traceback
 from rfid_reader import RFIDReader
 from processor import Processor
@@ -38,19 +39,21 @@ def init(cfg):
     
     processor = Processor(q,
                           batch_count=cfg['batch_count'],
-                          batch_interval=cfg['batch_interval'],
                           mqtt_config=cfg['mqtt'],
-                          interactive=cfg['interactive'])
+                          interactive=cfg['interactive'],
+                          lokalisation_config=cfg['lokalisation_config'])
 
     processor.start()
     
     reader = RFIDReader(rfid_port = cfg['rfid_port'], antenna_power = cfg['antenna_power'], antenna_number = cfg['antenna_number'])
     reader.set_save_directory(cfg['interactive'].get('raw_folder')) 
     
+    mecabot = None
     if (cfg['mecabot'].get('enabled')):
         mecabot = MQTTPoseReceiver(broker=cfg['mecabot'].get('broker'), topic=cfg['mecabot'].get('topic'))
         try:
             mecabot.start()
+            print ("mecabot started")
         except Exception as e:
             print("Failed to connect to mecabot:", e)
             processor.stop()
@@ -66,30 +69,33 @@ def init(cfg):
     print("Runner: started. Press Ctrl+C to stop.")
     return(q, processor, reader, mecabot)
 
+def get_delta(new, old):
+    x = abs(new[0]-old[0])
+    y = abs(new[1]-old[1])
+    return (np.sqrt(x*x+y*y))
+
 def main():
     
     cfg = load_config()
     z = cfg['Z_value']
     q, processor, reader, mecabot = init(cfg)
+    measurements = None
+    pose = None
 
     try:
         while True:
-            starting_time = time.time()
-            # get antenna position
-            if cfg['interactive'].get('antenna_position'):
-                ant_pos = antenna_pos_interactive()
-            else:
-                pose = mecabot.get_pose()
+
+            if cfg['mecabot'].get('enabled'):
+                pose = mecabot.get_pose()    
+                
                 x, y, yaw = pose
-                ant_pos = x, y, z, yaw
-                print ("pos",ant_pos)
-            location_time = time.time()
-            print (f"getting antenna location took {location_time-starting_time}seconds")
-            print ("preforming antenna cycle")
-            measurements = reader.perform_measurement(ant_pos)
-            antenna_time = time.time()
-            print (f"getting antenna data took {antenna_time-location_time}seconds")
-            
+                ant_pos = x, y, z, yaw - 90
+                print (f"measuring with pos:{pose}")
+            else:
+                ant_pos = antenna_pos_interactive()
+            if (ant_pos):
+                measurements = reader.perform_measurement(ant_pos)
+
             # check for unknown tags and optionally prompt user
             if cfg['interactive'].get('ask_tag_position_on_first_seen', True):
                 unknowns = [m['_unknown_tag'] for m in measurements if '_unknown_tag' in m]
@@ -99,10 +105,14 @@ def main():
                         reader.add_tag_location(ID, x, y)
 
             # push measurements into queue (blocks if full)
-            q.put({
-            "cycle": measurements,
-            "timestamp": time.time()
-            }, block=True)
+            if (measurements):
+                for m in measurements:
+                    tag = m.get("Tag ID")
+                    print ("detected tag:", tag)
+                q.put({
+                "cycle": measurements,
+                "timestamp": time.time()
+                }, block=True)
 
             time.sleep(cfg.get('measurement_interval', 1.0))
 
@@ -113,11 +123,11 @@ def main():
         traceback.print_exc()
     finally:
         print("Runner: shutting down...")
-        mecabot.stop()
+        if (cfg['mecabot'].get('enabled')):
+            mecabot.stop()
         processor.stop()
         processor.join(timeout=0)
         reader.close()
-        sys.exit(0)
 
 if __name__ == "__main__":
     main()
