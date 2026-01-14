@@ -46,9 +46,14 @@ ssh wheeltec@192.168.0.100
 
 The ip ''\texttt{192.168.0.100}'' should be the IP of the Mecabot.
 
-Appendix \ref{sec:appendix_add_ssh} shows how to add your SSH key to the Mecabot. This makes it so you don't need to constantly type in the password.
+Appendix \ref{sec:appendix_add_ssh} shows how to add your SSH key to the Mecabot. This makes it so you don't need to constantly type in the password. Figure \ref{fig:ssh} shows the ssh connection.
 
-%TODO: Add screencap of connected terminal.
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.9\linewidth]{./pictures/ssh_connection.png}
+	\caption{Terminal connected through SSH}
+	\label{fig:ssh}
+\end{figure}
 
 \subsubsection{Run ROS}
 When connected run the following command to see if ROS 2 is working.

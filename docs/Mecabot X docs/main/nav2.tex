@@ -24,9 +24,15 @@ maps:=<map location>
 
 \texttt{\textbf{Note:} currently the program ignores the \textit{maps} tag. See \ref{sec:nav2_no_map} for the solution.}
 
-The output of your terminal should look like the figure [1]
+The output of your terminal should look like the figure \ref{fig:nav2_terminal}.
 
-% TODO: Add terminal output.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.9\textwidth]{./pictures/nav2_output.png}
+	\caption{Nav2 terinal output}
+	\label{fig:nav2_terminal}
+\end{figure}
 
 \subsection{Start RVIZ}
 
@@ -38,19 +44,34 @@ ros2 launch wheeltec_rviz2 wheeltec_rviz.launch.py
 \end{minted}
 \end{tcolorbox}
 
-% TODO: picture RVIZ with nav-2 map
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.9\textwidth]{./pictures/nav2_set_waypoints.png}
+	\caption{RVIZ output with NAV2 running}
+	\label{fig:nav2_overview}
+\end{figure}
 
 \subsection{Create route}
 
-RVIZ should show the current map with the robot in the middle. Use the \texttt{\textit{2D Pose Estimate}} function to set the location of the robot and it's direction. It doesn't have to be perfect the SLAM function will adjust it's position based on the walls.
+RVIZ should show the current map with the robot in the middle. Use the \texttt{\textit{2D Pose Estimate}} function to set the location of the robot and it's direction. It doesn't have to be perfect the SLAM function will adjust it's position based on the walls. Figure \ref{fig:nav2_2d_pose} shows setting the 2D Pose Estimate.
 
-% TODO: Figuur van de 2d pose functie.
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.9\textwidth]{./pictures/nav2_2d_pose.png}
+	\caption{Nav2 set initial start location using 2D Pose Estimate}
+	\label{fig:nav2_2d_pose}
+\end{figure}
 
 After setting it's position you can create a route. Press in the bottom left on the \texttt{\textit{Waypoint / NAV Through Poses Mode}}. Now you can create a route using the \texttt{\textit{Nav2 Goal}} function. 
 
-Press and hold on the desired first spot. If you move the mouse you can force which way the robot should look when going to this point.
+Press and hold on the desired first spot. If you move the mouse you can force which way the robot should look when going to this point. Figure \ref{fig:nav2_route} show an example of a simple waypoint route.
 
-% TODO: Figuur van RVIZ nav2 goal.
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.9\linewidth]{./pictures/nav2_route.png}
+	\caption{Nav2 created route}
+	\label{fig:nav2_route}
+\end{figure}
 
 After creating the map you can press start. Now the robot should drive your desired path.
 

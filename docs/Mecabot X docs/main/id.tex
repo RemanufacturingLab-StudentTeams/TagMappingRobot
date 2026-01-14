@@ -22,8 +22,6 @@ Here are some advantages of using \texttt{ROS\_DOMAIN\_ID}:
 
 The following is needed to setup the \texttt{ROS\_DOMAIN\_ID} on your laptop and on the Mecabot X. In this chapter you need to open multiple terminals. These terminals are for the laptop and for the Mecabot. If a command needs to be run on the laptop the ''script box'' will be \colorbox{Gainsboro}{grey}. If it needs to be run on the Mecabot the ''script box'' will be \colorbox{NavajoWhite}{yellow}.
 
-%TODO: set the correct collor in the text.
-
 \subsubsection*{Connect the Laptop to the network}
 Make sure the laptop and the Mecabot are connected on the same network. If you don't know how you can check chapter \ref{sec:setup}.
 
@@ -102,7 +100,13 @@ ros2 run demo_nodes_cpp listener
 \end{minted}
 \end{tcolorbox}
 
-If the robot and the laptop are correctly put on the same \texttt{ROS\_DOMAIN\_ID} the you should see the following in the terminal. \textbf{TODO: Make picture of the terminal while running this script.}
-%TODO: add figure for the correct ouput.
+If the robot and the laptop are correctly put on the same \texttt{ROS\_DOMAIN\_ID} the you should see the following in the terminal. Figure \ref{fig:talker} shows the output.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.9\linewidth]{./pictures/talker_listener.png}
+	\caption{ROS network talker and listener above each other}
+	\label{fig:talker}
+\end{figure}
 
 \newpage
