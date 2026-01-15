@@ -1,0 +1,8 @@
+#ignore build and install dirs and logs
+
+/build
+**/install/
+**/log
+src/wheeltec_ros2/build/
+src/wheeltec_ros2/install/
+src/wheeltec_ros2/log/

@@ -1,0 +1,300 @@
+% !TeX spellcheck = en_GB
+\subsection{Setup environment}\label{sec:appendix_setup}
+
+\subsubsection{System and software requirement}
+The Mecabot X uses ROS Humble to run it's autonomous program. To use ROS2 you need the following specs:
+
+\begin{itemize}
+	\item ROS2 version: Humble
+	\item OS: Ubuntu 22.04
+\end{itemize}
+
+This can be done in three different ways. If you're using Windows you can setup WSL (\ref{sec:appendix_wsl_setup}). If you're dual booting or only using Linux follow appendix \ref{sec:appendix_linux_setup}.
+
+\textbf{NOTE: WSL and VM can't directly communicate with the} \texttt{ROS\_DOMAIN\_ID} \textbf{This means you can't (easily) visualise what the Mecabot X is doing using these options.}
+
+\subsubsection{WSL setup}\label{sec:appendix_wsl_setup}
+WSL stand for Windows subsystem for Linux. It can be used to run Linux software close to native on your Windows PC. This document will use the tutorial create by Microsoft\cite{WinWSL}.
+
+\paragraph{Optional: enable ''sudo'' for Windows}
+Sudo for Windows allows you to use the sudo command like it's used on Linux PC's. This way you don't need to open PowerShell as an administrator.
+
+Go to settings->System->Advanced. There you can enable ''Enable sudo''. See figure \ref{fig:appendix_win_sudo_1} how it looks like.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.7\linewidth]{./pictures/win_sudo_1.png}
+	\caption{Windows enable sudo}
+	\label{fig:appendix_win_sudo_1}
+\end{figure}
+
+\paragraph{Enable WSL}
+Go to settings. In the search bar type ''Turn Windows features on or off''. A screen should appear like shown in figure \ref{fig:appendix_windows_features}.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.5\linewidth]{./pictures/Windows_features.png}
+	\caption{Windows Features}
+	\label{fig:appendix_windows_features}
+\end{figure}
+
+Search for the entry labelled ''Windows Subsystem for Linux'' and enable the feature. The system will ask to be rebooted. After the reboot follow the next steps.
+
+After the reboot open Powershell and type the following:
+
+\begin{tcolorbox}
+\begin{minted}{bash}
+wsl --install
+\end{minted}
+\end{tcolorbox}
+
+After the command is done you need to reboot the system again.
+
+\paragraph{Install Ubuntu 22.04}
+After the reboot open the Microsoft Store and search ''Ubuntu 22.04''. \\
+\textbf{It needs to be Ubuntu 22.04 newer version don't work with ROS2 Humble.} \\
+Figure \ref{fig:appendix_windows_store} shows how the store looks like.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.5\linewidth]{./pictures/win_download_ubuntu.png}
+	\caption{Microsoft Store Ubuntu install}
+	\label{fig:appendix_windows_store}
+\end{figure}
+
+After the download press the open button. It will ask for the following information:
+
+\begin{itemize}
+	\item ''Enter new UNIX username:''
+	\begin{itemize}
+		\item This is the username for the Linux installation.
+	\end{itemize}
+	\item ''New password:''
+	\begin{itemize}
+		\item This is the password for the Linux installation. It won't show the characters even though you're typing.
+	\end{itemize}
+	\item ''Retype new password:''
+	\begin{itemize}
+		\item Retype the previously typed password.
+	\end{itemize}
+\end{itemize}
+
+It should look like shown in figure \ref{fig:appendix_win_wsl_terminal}.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\linewidth]{./pictures/win_wsl_terminal.png}
+	\caption{WSL terminal setup}
+	\label{fig:appendix_win_wsl_terminal}
+\end{figure}
+
+After the install you should update the Ubuntu install using the following commands:
+
+\begin{tcolorbox}
+\begin{minted}{bash}
+sudo apt update
+sudo apt upgrade -y
+\end{minted}
+\end{tcolorbox}
+
+It will ask for the password you just setup.
+
+\paragraph{Setup graphical WSL}
+WSL can run graphical Linux applications\cite{WinWSLG}. This is needed to run stuff like RVIZ2. To do this the WSL Ubuntu system needs to be run with WSL 2.
+
+Open Powershell. and run the following command:
+
+\begin{tcolorbox}
+\begin{minted}{bash}
+wsl -l -v
+\end{minted}
+\end{tcolorbox}
+
+It should show the following output:
+
+\begin{tcolorbox}[colback=LightGoldenrodYellow]
+\begin{minted}{bash}
+  NAME            STATE           VERSION
+* Ubuntu-22.04    Running         2
+\end{minted}
+\end{tcolorbox}
+
+If the version is 2 you can continue to \ref{sec:appendix_check_gui} otherwise follow the next commands.
+
+If the state is ''running'' you need to stop the WSL instance. Using the following command:
+
+\begin{tcolorbox}
+\begin{minted}{bash}
+wsl --shutdown
+\end{minted}
+\end{tcolorbox}
+
+Check if it's stopped using:
+
+\begin{tcolorbox}
+\begin{minted}{bash}
+wsl -l -v
+\end{minted}
+\end{tcolorbox}
+
+the ''\texttt{STATE}'' should be ''Stopped''. After the system is stopped run the following command:
+
+\begin{tcolorbox}
+\begin{minted}{bash}
+wsl --set-version _distro_name_ 2
+\end{minted}
+\end{tcolorbox}
+
+The ''\texttt{\_distro\_name\_}'' should be the name you get running ''\texttt{wsl -l -v}''. In this example the name is: ''\texttt{Ubuntu-22.04}''. After hitting enter it will upgrade from WSL 1 to WSL 2. This can take several minutes.
+
+\paragraph{Check GUI}\label{sec:appendix_check_gui}
+
+If you're running WSL2 you can run Graphical Linux applications. Here are some commands to test if this function is working. The following commands need to be run in the WSL ubuntu terminal.
+
+Install gedit:
+
+\begin{tcolorbox}
+\begin{minted}{bash}
+sudo apt install gedit
+\end{minted}
+\end{tcolorbox}
+
+After installing run the following command:
+
+\begin{tcolorbox}
+\begin{minted}{bash}
+gedit
+\end{minted}
+\end{tcolorbox}
+
+This should run a graphical text editor. Figure \ref{fig:appendix_gedit} shows how the application looks like.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.5\linewidth]{./pictures/win_wsl_gedit.png}
+	\caption{Gedit running in WSL}
+	\label{fig:appendix_gedit}
+\end{figure}
+
+Now you can follow the Linux setup (appendix \ref{sec:appendix_linux_setup}) to install ROS2 in the WSL terminal.
+
+\subsubsection{Linux setup}\label{sec:appendix_linux_setup}
+
+This documents assumes you already have a Linux version installed. It follows and expends upon the setup from the ROS2\cite{ROS_humble_setup} documentation site.
+
+\paragraph{Toolbox}
+
+If you're running an newer version of Ubuntu or a complexly different Linux distribution you can use Toolbox to install Ubuntu 22.04 using Podman\cite{Toolbx}.
+The following command will download Ubuntu 22.04.
+
+\begin{tcolorbox}
+\begin{minted}{bash}
+toolbox create --distro ubuntu --release 22.04
+\end{minted}
+\end{tcolorbox}
+
+After the install all the following commands need to be done inside the toolbox. You can enter the toolbox using the following command:
+
+\begin{tcolorbox}
+\begin{minted}{bash}
+toolbox enter ubuntu
+\end{minted}
+\end{tcolorbox}
+
+\paragraph{Update Ubuntu}
+
+First check if you're running the correct version of Ubuntu.
+
+\begin{tcolorbox}
+\begin{minted}{bash}
+lsb_release -a
+\end{minted}
+\end{tcolorbox}
+
+This should display the following:
+
+\begin{tcolorbox}[colback=LightGoldenrodYellow]
+\begin{minted}{bash}
+Distributor ID: Ubuntu
+Description:    Ubuntu 22.04.5 LTS
+Release:        22.04
+Codename:       jammy
+\end{minted}
+\end{tcolorbox}
+
+If the ''\texttt{Release}'' isn't ''22.04'' you need to install the correct Ubuntu version.
+
+\paragraph{Install ROS2 Humble}
+
+\subparagraph{Set locale}
+The locale needs to be \texttt{UTF-8} you can check using the following command:
+
+\begin{tcolorbox}
+\begin{minted}{bash}
+locale
+\end{minted}
+\end{tcolorbox}
+
+Set locale to \texttt{en\_US.UTF-8}:
+
+\begin{tcolorbox}
+\begin{minted}{bash}
+sudo apt update && sudo apt install locales
+sudo locale-gen en_US.UTF-8
+sudo update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
+export LANG=en_US.UTF-8
+\end{minted}
+\end{tcolorbox}
+
+\subsubsection{Setup sources}
+
+Enable the Universe repository.
+
+\begin{tcolorbox}
+\begin{minted}{bash}
+sudo apt install software-properties-common
+sudo add-apt-repository universe
+\end{minted}
+\end{tcolorbox}
+
+The following adds the ROS2 Humble packages to the repository
+
+\begin{tcolorbox}
+\begin{minted}[tabsize=2,breaklines,breakanywhere]{bash}
+sudo apt update && sudo apt install curl -y
+export ROS_APT_SOURCE_VERSION=$(curl -s https://api.github.com/repos/ros-infrastructure/ros-apt-source/releases/latest | grep -F "tag_name" | awk -F\" '{print $4}')
+curl -L -o /tmp/ros2-apt-source.deb "https://github.com/ros-infrastructure/ros-apt-source/releases/download/${ROS_APT_SOURCE_VERSION}/ros2-apt-source_${ROS_APT_SOURCE_VERSION}.$(. /etc/os-release && echo ${UBUNTU_CODENAME:-${VERSION_CODENAME}})_all.deb"
+sudo dpkg -i /tmp/ros2-apt-source.deb
+\end{minted}
+\end{tcolorbox}
+
+\subparagraph{Install ROS 2 packages}
+
+First update the repository and upgrade to the newest version
+
+\begin{tcolorbox}
+\begin{minted}{bash}
+sudo apt update
+sudo apt upgrade
+\end{minted}
+\end{tcolorbox}
+
+After updating you can install the ROS Humble desktop package using the following command.
+
+\begin{tcolorbox}
+\begin{minted}{bash}
+sudo apt install ros-humble-desktop
+\end{minted}
+\end{tcolorbox}
+
+Optionally you can install the ROS dev tools. These are needed to re-compile the existing binary's.
+
+\begin{tcolorbox}
+\begin{minted}{bash}
+sudo apt install ros-dev-tools
+\end{minted}
+\end{tcolorbox}
+
+Now ROS should be installed on the PC and you can run the ROS commands in this manual.
+
+\newpage

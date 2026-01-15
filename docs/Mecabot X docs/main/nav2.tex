@@ -1,0 +1,201 @@
+% !TeX spellcheck = en_GB
+\section{Autonomous driving}\label{sec:autonomous}
+
+This chapter shows an example on how to make the robot drive autonomously through an environment. For this to work you'll need a saved map as explained in the previous chapter.
+
+The Mecabot X uses the ROS Navigation2 Stack, commonly referred to as NAV2. NAV2 is a comprehensive framework designed for autonomous navigation in robots using ROS2.
+
+NAV2 provides a robust set of tools and functionalities for autonomous navigation. It includes perception capabilities that convert sensor data into an environmental model, allowing the robot to understand and interact with its surroundings. The planning component computes paths through the environment, ensuring they are kinematically feasible for the robot.
+
+To use NAV2 you need ROS2 and NAV2 installed on your pc and the Mecabot. You can follow appendix \ref{sec:appendix_setup} and \ref{sec:appendix_compile} to download the correct packages.
+
+\subsection{Run Navigation 2}
+The main purpose of the \texttt{wheeltecc\_nav2} package is to implement 2D navigation and other extended functions on the robot side. It uses the SmacPlannerHybrid as its global planner, due to its compatibility with Differential, omnidirectional and Ackermann robots. 
+
+To start the nav2 package, run the following command on the robot:
+
+\begin{tcolorbox}[colback=NavajoWhite]
+	\begin{minted}{bash}
+source ~/wheeltec_ros2/install/setup.bash
+ros2 launch wheeltec_nav2 wheeltec_nav2.launch.py 
+maps:=<map location>
+	\end{minted}
+\end{tcolorbox}
+
+\texttt{\textbf{Note:} currently the program ignores the \textit{maps} tag. See \ref{sec:nav2_no_map} for the solution.}
+
+The output of your terminal should look like the figure \ref{fig:nav2_terminal}.
+
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.9\textwidth]{./pictures/nav2_output.png}
+	\caption{Nav2 terinal output}
+	\label{fig:nav2_terminal}
+\end{figure}
+
+\subsection{Start RVIZ}
+
+When nav2 has started you can open RVIZ on your pc using the following command:
+
+\begin{tcolorbox}[colback=Gainsboro]
+\begin{minted}{bash}
+ros2 launch wheeltec_rviz2 wheeltec_rviz.launch.py
+\end{minted}
+\end{tcolorbox}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.9\textwidth]{./pictures/nav2_set_waypoints.png}
+	\caption{RVIZ output with NAV2 running}
+	\label{fig:nav2_overview}
+\end{figure}
+
+\subsection{Create route}
+
+RVIZ should show the current map with the robot in the middle. Use the \texttt{\textit{2D Pose Estimate}} function to set the location of the robot and it's direction. It doesn't have to be perfect the SLAM function will adjust it's position based on the walls. Figure \ref{fig:nav2_2d_pose} shows setting the 2D Pose Estimate.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.9\textwidth]{./pictures/nav2_2d_pose.png}
+	\caption{Nav2 set initial start location using 2D Pose Estimate}
+	\label{fig:nav2_2d_pose}
+\end{figure}
+
+After setting it's position you can create a route. Press in the bottom left on the \texttt{\textit{Waypoint / NAV Through Poses Mode}}. Now you can create a route using the \texttt{\textit{Nav2 Goal}} function. 
+
+Press and hold on the desired first spot. If you move the mouse you can force which way the robot should look when going to this point. Figure \ref{fig:nav2_route} show an example of a simple waypoint route.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.9\linewidth]{./pictures/nav2_route.png}
+	\caption{Nav2 created route}
+	\label{fig:nav2_route}
+\end{figure}
+
+After creating the map you can press start. Now the robot should drive your desired path.
+
+
+\subsection{Troubleshooting}
+
+\subsubsection{NO RVIZ data}
+
+Does your laptop and the Mecabot have the same ''\texttt{ROS\_DOMAIN\_ID}''?
+
+\begin{tcolorbox}[colback=Gainsboro]
+	\begin{minted}{bash}
+export ROS_DOMAIN_ID=10
+	\end{minted}
+\end{tcolorbox}
+
+Check if the simple ROS demo\_node\_cpp talker and listener is working. (See chapter \ref{sec:ROS_ID}.)
+
+If the talker and listener aren't working your laptop and the Mecabot are not on the same network. (Using WSL or a VM.)
+
+Advise: use Linux natively.
+
+\subsubsection{RVIZ is showing the wrong map}\label{sec:nav2_no_map}
+
+Currently the wheeltec\_nav2 program ignores the ''maps:='' tag. With the ''maps:='' tag you can direct nav2 to use the map you've created using the na2\_map\_saver commando. 
+
+The nav2\_map\_saver commando created two files; ''map1.pgm'' and ''map1.yaml''. (The names are different depending on how you named them.) These files need to be moved to a specific directory so nav2\_map\_saver can use them.
+
+Move the files to:  \\ \highLight[LightGrey]{''\texttt{\~{}/wheeltec\_ros2/install/wheeltec\_nav2/share/wheeltec\_nav2/map}''}. \\ The files need to be renamed to: \highLight[LightGrey]{''\texttt{WHEELTEC.pgm}''} and \highLight[LightGrey]{''\texttt{WHEELTEC.yaml}''}. (The filenames are case sensitive.)
+
+In the YAML file you'll also need to rename the image to ''\texttt{WHEELTEC.pgm}''. Below shows an example of what the YAML file should look like.
+
+\begin{tcolorbox}[colback=NavajoWhite]
+\begin{minted}{yaml}
+image: WHEELTEC.pgm
+mode: trinary
+resolution: 0.05
+origin: [-10, -10, 0]
+negate: 0
+occupied_thresh: 0.65
+free_thresh: 0.196
+\end{minted}
+\end{tcolorbox}
+
+\subsubsection{Robot drives around the waypoint}
+
+This can happen when the waypoint tolerance is too low. Then the robot thinks it hasn't reached the waypoint yet and drives around it to try and reach it.
+
+You have two options to resolve it.
+
+\begin{enumerate}
+	\item Give the robot a nudge with your feet. This can force it to try a new route that will go trough the waypoint.
+	\item Set a higher tolerance in the config file.
+\end{enumerate}
+
+\paragraph{Set higher tolerance}
+
+Nav2 uses a config file to determine the physical specs of the robot and how the navigate trough the world. These files are located in the following directory: 
+
+\colorbox{NavajoWhite}{%
+\parbox{\linewidth}{%
+	''\texttt{\~{}/wheeltec\_ros2/src/transbot/navigation/wheeltec\_robot\_nav2 /param/wheeltec\_param/}''}}
+
+In this folder there are multiple files. Each file is a setup for a different robot from Roboworks. Currently the program uses the \highLight[NavajoWhite]{\texttt{param\_dongguan\_v2.yaml}} file.
+
+In this file there is the following parameters:
+
+\begin{tcolorbox}[colback=NavajoWhite]
+\begin{minted}{yaml}
+planner_server:
+  ros__parameters:
+    expected_planner_frequency: 20.0
+    use_sim_time: False
+    planner_plugins: ["GridBased"]
+    GridBased:
+    plugin: "nav2_navfn_planner/NavfnPlanner"
+    tolerance: 0.5
+    use_astar: false
+    allow_unknown: true
+\end{minted}
+\end{tcolorbox}
+
+The ''\texttt{tolerance: 0.5}'' means the robot can be 0.5 meters away from the waypoint to count it as a success. You can lower or higher this if you want.
+
+\subsubsection{Nav doesn't run when the end is near the start}
+
+Currently the nav2 crashes if the last waypoint is too close to the place where the robot starts. Try making a new route where the robot ends in a different spot then it is right now.
+
+\subsubsection{The robot clips objects}
+
+This happens because the path finder creates a route that is too close to an object. The clipping usually happens while going around corners. there are too ways to fix this.
+
+\begin{enumerate}
+	\item Set the waypoints further away from walls so the path finder doesn't create a route that could clip the side.
+	\item Set a bigger model that nav2 uses in the robot. This will make it so the robot has a bigger distance from the walls.
+\end{enumerate}
+
+\paragraph{Set bigger robot model}
+Nav2 uses a config file to determine the physical specs of the robot and how the navigate trough the world. These files are located in the following directory: 
+
+\colorbox{NavajoWhite}{%
+	\parbox{\linewidth}{%
+		''\texttt{\~{}/wheeltec\_ros2/src/transbot/navigation/wheeltec\_robot\_nav2/ param/wheeltec\_param/}''}}
+
+In this folder there are multiple files. Each file is a setup for a different robot from Roboworks. Currently the program uses the \highLight[NavajoWhite]{\texttt{param\_dongguan\_v2.yaml}} file.
+
+In this file there is the following parameters:
+
+\begin{tcolorbox}[colback=NavajoWhite] % TODO: Search in config where this can be changed.
+\begin{minted}{yaml}
+planner_server:
+  ros__parameters:
+    expected_planner_frequency: 20.0
+    use_sim_time: False
+    planner_plugins: ["GridBased"]
+    GridBased:
+    plugin: "nav2_navfn_planner/NavfnPlanner"
+    tolerance: 0.5
+    use_astar: false
+    allow_unknown: true
+\end{minted}
+\end{tcolorbox}
+
+In this file you can change the size of the robot. If the robot thinks it's bigger it will move around the objects with a bigger arch.
+
+
+\newpage

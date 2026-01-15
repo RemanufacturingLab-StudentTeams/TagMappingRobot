@@ -1,0 +1,70 @@
+% !TeX spellcheck = en_GB
+\section{Setup}\label{sec:setup}
+This section will show how to connect with the Mecabot X and use the ROS 2 commands. For this section you need a working version of Ubuntu 22.04 with ROS 2 Humble installed. Appendix \ref{sec:appendix_setup} shows how to install Ubuntu and setup ROS 2.
+
+%TODO: Copy prefious info.
+
+\subsection{Connecting to the Mecabot}
+Currently the Mecabot is connected to the ''iotroam'' network. Your PC needs to be connected to the same network and you need to find the IP of the Mecabot.
+
+\subsubsection{Mecabot on iotroam}
+
+Finding the IP can be done using ''Angry IP Scanner''\cite{IPScanner}. Figure \ref{fig:ip_scanner} show the interface of the IP scanner. All the IPs with a blue dot are active IPs that can be connected to.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\linewidth]{./pictures/ip_scanner.png}
+	\caption{Example of Angry Ip Scanner window}
+	\label{fig:ip_scanner}
+\end{figure}
+
+If you're connected to the correct WI-FI network then the ''IP Range:'' should be filled in automaticity. The range for ''iotroam'' should be from \texttt{10.35.4.0} to \texttt{10.35.4.255}.
+
+Currently the IP of the Mecabot X is: \texttt{10.35.4.17}, but this can change over time.
+
+\subsubsection{Mecabot on own network}
+If the Mecabot X can't find a WI-FI network that it previously has connected to. It will create it's own WI-FI network called ''\texttt{WHEELTEC\_ORINNX\_humble}''.
+
+You can connect to this network using the default password ''\texttt{dongguan}''.\\
+\textbf{Note: If you connect to the Mecabot hotspot you won't have internet on you laptop.} \\
+
+\begin{figure}[h]
+	\centering
+	\includegraphics[width=0.8\linewidth]{./pictures/mecabot_wifi_win.jpg}
+\end{figure}
+
+When connected using the hotspot the default IP is: \texttt{192.168.0.100}.
+
+\subsubsection{Using SSH}
+When connected on the same network you can use SSH to connect to the Meacabot X. The password is: ''\texttt{dongguan}''.
+
+\begin{tcolorbox}
+\begin{minted}{bash}
+ssh wheeltec@192.168.0.100
+\end{minted}
+\end{tcolorbox}
+
+The ip ''\texttt{192.168.0.100}'' should be the IP of the Mecabot.
+
+Appendix \ref{sec:appendix_add_ssh} shows how to add your SSH key to the Mecabot. This makes it so you don't need to constantly type in the password. Figure \ref{fig:ssh} shows the ssh connection.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.9\linewidth]{./pictures/ssh_connection.png}
+	\caption{Terminal connected through SSH}
+	\label{fig:ssh}
+\end{figure}
+
+\subsubsection{Run ROS}
+When connected run the following command to see if ROS 2 is working.
+
+\begin{tcolorbox}
+\begin{minted}{bash}
+ros2 launch turn_on_wheeltec_robot turn_on_wheeltec_robot.launch.py
+\end{minted}
+\end{tcolorbox}
+
+This will initialize the sensors in the Mecabot. If this commands fails or is not found it might mean source isn't used.
+See appendix \ref{sec:appendix_compile} or \ref{sec:appendix_bashrc} for more info on how to resolve this.
+
+\newpage

@@ -1,0 +1,163 @@
+% !TeX spellcheck = en_GB
+\subsection{Miscellaneous}
+
+\subsubsection{Add SSH key to Mecabot X}\label{sec:appendix_add_ssh}
+By adding your ssh key to the Mecabot X you don't need to put in your password every time you're connecting.
+
+\paragraph{Add config file}
+The config file will create a alias so you don't need to type the user and ip every time you are connecting.
+
+On your pc run the following command:
+
+\begin{tcolorbox}[colback=Gainsboro]
+	\begin{minted}{bash}
+nano ~/.ssh/config
+	\end{minted}
+\end{tcolorbox}
+
+put the following data in this document:
+
+\begin{tcolorbox}[colback=Gainsboro]
+\begin{minted}{yaml}
+Host dongguan
+  HostName 10.35.4.35
+  User wheeltec
+  Port 22
+\end{minted}
+\end{tcolorbox}
+
+\textbf{Note: The amount of spaces is important. You need two.}
+
+The ip should be changed based on the ip of the Mecabot X.
+
+Afterwards you can type the following to connect to the Mecabot X:
+
+\begin{tcolorbox}[colback=Gainsboro]
+	\begin{minted}{bash}
+ssh dongguan
+	\end{minted}
+\end{tcolorbox}
+
+\paragraph{Creating SSH key}
+
+If you already have a SSH key you can skip this step
+
+type the following command to create a new SSH key.
+
+\begin{tcolorbox}[colback=Gainsboro]
+	\begin{minted}{bash}
+ssh-keygen
+	\end{minted}
+\end{tcolorbox}
+
+It will ask for the name, size and password. You can press enter to leave the settings default.
+
+\paragraph{Send SSH key to the Mecabot X}
+
+To copy your key to the Mecabot X follow the following command:
+
+\begin{tcolorbox}[colback=Gainsboro]
+\begin{minted}{bash}
+ssh-copy-id wheeltec@10.35.4.35
+\end{minted}
+\end{tcolorbox}
+
+Now, you won't need to put in the password when connecting.
+
+\subsubsection{Updating .bashrc}\label{sec:appendix_bashrc}
+
+.bashrc is a file with commands that is run every time you open a terminal. By adding the ''source'' and ''export'' command you don't need to set them every time.
+
+To do this run the following command: (This can be done on your pc or the Mecabot X)
+
+\begin{tcolorbox}[colback=Gainsboro]
+	\begin{minted}{bash}
+echo "source ~/wheeltec_ros2/install/setup.bash" >> ~/.bashrc
+echo "export ROS_DOMAIN_ID=10" >> ~/.bashrc
+	\end{minted}
+\end{tcolorbox}
+
+\textbf{Note: This is already done in the Mecabot X.}
+
+\subsubsection{Copy binary's from Mecabot X}\label{sec:appendix_copy_bin}
+
+If you want to edit the source code locally or you want the source code you'll need the binary's from the Mecabot X.
+
+To get these binary's from the Mecabot X there are two options. It can be done through a graphical interface or through the command line interface.
+
+\paragraph{Graphical} Graphical is the easiest way to copy the data to your pc.
+
+\begin{enumerate}
+	\item connect to the same WiFi network as the Mecabot X.
+	\item open file explorer on your PC.
+	\item type the following in the top bar your file explorer: ''sftp://wheeltec@10.35.4.25''
+	\begin{itemize}
+		\item Change the ip to the current ip of the Mecabot X.
+	\end{itemize}
+	\item Type the password in the dialog box.
+	\item now you can copy ''wheeltec\_ros2.tgz'' to your pc.
+	\item extract this zip file to your home directory (\textit{\~{}/}).
+\end{enumerate}
+
+\paragraph{Command line}
+
+You can also copy the needed data using the command line. Follow the these steps to copy the data.
+
+Open a terminal on your pc and type the following command's
+
+\begin{tcolorbox}[colback=Gainsboro]
+\begin{minted}{bash}
+cd ~
+scp wheeltec@10.35.4.35:~/wheeltec_ros2.tgz
+tar -zxvf wheeltec_ros2.tgz
+\end{minted}
+\end{tcolorbox}
+
+\subsubsection{Change ROS model}
+
+ROS needs to know a few thinks from the robot to work properly. The following are the primary properties.
+
+\begin{itemize}
+	\item The location and orientation of the LiDAR.
+	\item The location and orientation of the 3D camera.
+	\item The location and size of the tires.
+	\item the size of the main body
+\end{itemize}
+
+These properties are located in a URDF file\cite{URDF}. The URDF files are located in the following folder '' wheeltec\_ros2/src/transbot/core/wheeltec\_robot\_urdf/urdf''.
+
+Here you can create a new URDF file. Currently the system uses the ''dongguan.urdf'' file.
+
+\paragraph{Change URDF file}
+
+If you want to make changes to the model I recommend copying the existing URDF file and making changes to the copy.
+
+In the following file you can add the model so the Mecabot X can use it. ''wheeltec\_ros2/src/transbot/core/turn\_on\_wheeltec\_robot/launch/robot\_mode\_description.launch.py''
+
+
+When changing these files you need to re-compile the software.
+
+\subsubsection{Set LiDAR blind spots}
+
+The system has a LiDAR filter. This can be used so the LiDAR ignores stuff that is mounted on the back. The code is located at: ''wheeltec\_ros2/src/dongguan/lidar\_filter''
+
+The code has two blind spot locations. These can be set in degrees.
+
+\textbf{Note: 0 degrees is when the LiDAR is looking back.}
+
+The LiDAR filter takes the info from the ''scan'' topic and sends the filtered data tot the ''scanned'' topic.
+
+Below is an example of where you can change the current blind spots.
+
+\begin{tcolorbox}[colback=NavajoWhite]
+\begin{minted}{c++}
+// Blindspot in Degrees. Change to the angle you need.
+// When changing these values you need to run "colcon build" to recompile
+blind_1_start_ = 317.0 * M_PI / 180.0;  // Start blindspot (in degrees)
+blind_1_end_ = 337.0 * M_PI / 180.0;    // End blindstpot (in degrees)
+
+blind_2_start_ = 23.0 * M_PI / 180.0;
+blind_2_end_ = 43.0 * M_PI / 180.0;
+\end{minted}
+\end{tcolorbox}
+

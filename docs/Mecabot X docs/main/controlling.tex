@@ -1,0 +1,111 @@
+% !TeX spellcheck = en_GB
+\section{Controlling the Mecabot}\label{sec:controlling}
+The Mecabot can be manually controlled using multiple different methods. In this chapter the known connection methods are explained.
+
+\subsection{Controlling the Mecabot with a PS2 controller}
+The Mecabot can be operated using a PS2 controller. Follow these steps to set up and utilize the PS2 controller for robot control.
+
+This is the easiest way to control the Mecabot. 
+
+\subsubsection*{Connect the controller}
+
+\begin{itemize}
+	\item Plug in the PS2 controller to the Mecabot X.
+	\item Wait until the indicator light on the controller turn red, indicating a successful connection.
+	\begin{itemize}
+		\item Sometimes you need to press the ''Analog'' button on the controller.
+	\end{itemize}
+\end{itemize}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.5\linewidth]{./pictures/PS2_controller.jpg}
+	\caption{PS2 controller connection}
+	\label{fig:PS2_controller}
+\end{figure}
+
+\subsubsection*{Activate the controller}
+
+\begin{itemize}
+	\item Press the start button on the PS2 controller to activate it.
+\end{itemize}
+
+\subsubsection*{Switch to PS2 control mode}
+
+\begin{itemize}
+	\item Look at the screen on the PCB board of the Mecabot X.
+	\item Push the left joystick forward to switch the control mode from ROS to PS2. The screen will display the current control mode, confirming the change (see figure \ref{fig:PS2_oled} for visual guidance).
+\end{itemize}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.5\linewidth]{./pictures/PS2_oled.jpg}
+	\caption{Switch to PS2 control mode}
+	\label{fig:PS2_oled}
+\end{figure}
+
+\subsubsection*{PS2 controller controls}
+\begin{itemize}
+	\item \textbf{Left joystick}: Controls translation movement (forward, backwards, left, right).
+	\item \textbf{Right joystick}: Controls rotation movement (turning the robot).
+	\item \textbf{L1 button}: Increases the robot's speed (acceleration).
+	\item \textbf{L2 button}: Decrease the robot's speed (deceleration).
+\end{itemize}
+
+
+\subsection{Controlling the Mecabot with ROS 2}
+
+In this chapter, we will discuss how to set up the Mecabot to control it using your laptops keyboard. It assumes you've followed the steps of the previous chapters before continuing.
+
+Open an terminal and connect to the Mecabot. Run the following commands:
+
+\begin{tcolorbox}[colback=NavajoWhite]
+\begin{minted}{bash}
+source ~/wheeltec_ros2/install/setup.bash
+ros2 launch turn_on_wheeltec_robot turn_on_wheeltec_robot.launch.py
+\end{minted}
+\end{tcolorbox}
+
+This will enable the sensors en motor of the Mecabot.\\
+\textbf{NOTE: a lot of the commands in the future of the document do this for you in the background. If you run this command in parallel, it could crash the system.}
+
+Open an second terminal and also connect this to the Mecabot. Run the following command in this second terminal:
+
+\begin{tcolorbox}[colback=NavajoWhite]
+\begin{minted}{bash}
+source ~/wheeltec_ros2/install/setup.bash
+ros2 run wheeltec_robot_keyboard wheeltec_keyboard
+\end{minted}
+\end{tcolorbox}
+
+Figure \ref{fig:wheeltec_keyboard} shows how your terminal should look like.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.6\linewidth]{./pictures/wheeltec_keyboard.png}
+	\caption{Wheeltec keyboard command}
+	\label{fig:wheeltec_keyboard}
+\end{figure}
+
+\subsection{Controlling the Mecabot with a joystick controller}
+The Mecabot can also be controlled using a wireless joystick controller. Follow the following steps to set up and utilize the joystick controller for robot control:
+
+\begin{itemize}
+	\item Connect the joystick's dongle in one of the usb ports on the Mecabot X.
+	\begin{itemize}
+		\item Dongle is usually already connected in the robot.
+	\end{itemize}
+	\item turn on the joystick.
+	\item Connect to the Mecabot using SSH and run the following command:
+\end{itemize}
+
+\begin{tcolorbox}[colback=NavajoWhite]
+\begin{minted}{bash}
+ros2 launch wheeltec_joy wheeltec_joy.launch.py
+\end{minted}
+\end{tcolorbox}
+
+This will execute the script and enable control of the Mecabot X using the joystick.
+
+
+\newpage

@@ -1,0 +1,15 @@
+% !TeX spellcheck = en_GB
+\section{Recommendations}
+To improve the use of the Mecabot X these recommendations can be implemented in the future.
+
+\subsection{Map argument Nav2}
+
+Currently the nav2 function ignores the \texttt{maps :=} argument. So you need to hardcode the map name and location when using this function. The usability can be improved if this argument would work.
+
+\subsection{LiDAR filter variables}
+
+Currently you need the set the blind spots inside the .cpp file. This means you need to recompile every time you change this variable. This could be mediated by creating a config file that is read by the program.
+
+\subsection{LiDAR rotation}
+
+The software has the LiDAR rotated 180 degrees from the front. If this is changed the physical LiDAR can be rotated to the correct orientation.

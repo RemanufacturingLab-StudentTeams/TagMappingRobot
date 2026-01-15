@@ -1,0 +1,94 @@
+% !TeX spellcheck = en_GB
+\documentclass[11pt,a4paper]{article}
+
+\usepackage{fontspec}
+
+\usepackage[english]{babel}
+\usepackage[table,xcdraw, svgnames]{xcolor}
+\usepackage[margin=3cm, includefoot]{geometry}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{float}
+
+\usepackage{ragged2e}
+\usepackage{hhline}
+%\usepackage{courier}
+
+% Set fonts
+\setmainfont{Noto Sans}[BoldFont=Noto Sans Bold, ItalicFont=Noto Sans Italic]
+\setmonofont{Noto Sans Mono}[BoldFont=Noto Sans Mono Bold, ItalicFont=Noto Sans Italic]
+\setsansfont{Noto Sans}
+
+% To display code
+\usepackage{minted}
+\usepackage{tcolorbox}
+\usepackage{etoolbox}
+
+\usepackage{hyperref}
+\hypersetup{
+	colorlinks,
+	citecolor={black},
+	filecolor={black},
+	linkcolor={black},
+	urlcolor={black},
+	pdfauthor={Alireza Beheshti, Rufus Fraanje, Wouter van Velzen},
+	pdftitle={Manual Mecabot X},
+	pdfsubject={Manual Mecabot X},
+	pdfkeywords={manual, Mecabot X},
+}
+
+\usepackage{csquotes}
+
+\usepackage{vhistory}
+
+% Used for highlight colors
+\usepackage{luacolor}
+\usepackage{lua-ul}
+
+% References
+\usepackage[backend=biber, style=ieee]{biblatex}
+\addbibresource{references.bib}
+
+\begin{document}
+
+\input{titlepage}
+
+\renewcommand\thesection{}
+\setcounter{page}{1}
+\pagenumbering{Roman}
+
+\tableofcontents
+
+\newpage
+
+\setcounter{section}{0}
+\pagenumbering{arabic}
+\renewcommand\thesection{\arabic{section}}
+
+\input{./main/setup}
+
+\input{./main/id}
+
+\input{./main/controlling}
+
+\input{./main/slam}
+
+\input{./main/nav2}
+
+\input{./main/commands}
+
+\input{./main/recomendations}
+
+\newpage
+
+\addcontentsline{toc}{section}{References}
+\printbibliography
+
+%appendix
+\newpage
+\section{Appendix}\label{sec:appendix}
+\renewcommand\thesubsection{\Alph{subsection}}
+
+\input{./appendix/appendix}
+
+\end{document}
