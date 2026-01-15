@@ -31,8 +31,6 @@ This should run a RVIZ window. Figure \ref{fig:RVIZ2} shows an example.
 	\label{fig:RVIZ2}
 \end{figure}
 
-%TODO: add note that it can say it crashes when closing down.
-
 \subsection{wheeltec\_keyboard}
 
 
@@ -70,7 +68,7 @@ These commands can be used manually. But other commands already do this in the b
 
 \begin{tcolorbox}[colback=NavajoWhite]
 \begin{minted}{bash}
-ros2 launch turn_on_wheletec_robot <ARGUMENT>
+ros2 launch turn_on_wheeltec_robot <ARGUMENT>
 \end{minted}
 \end{tcolorbox}
 
@@ -80,7 +78,7 @@ The following arguments are most used. The rest of the commands are shown in the
 Completely turn on the Mecabot.
 \begin{tcolorbox}[colback=NavajoWhite]
 \begin{minted}{bash}
-ros2 launch turn_on_wheletec_robot turn_on_wheeltec_robot.launch.py
+ros2 launch turn_on_wheeltec_robot turn_on_wheeltec_robot.launch.py
 \end{minted}
 \end{tcolorbox}
 
@@ -88,59 +86,68 @@ ros2 launch turn_on_wheletec_robot turn_on_wheeltec_robot.launch.py
 Turns on the LiDAR:
 \begin{tcolorbox}[colback=NavajoWhite]
 \begin{minted}{bash}
-ros2 launch turn_on_wheletec_robot wheeltec_lidar.launch.py
+ros2 launch turn_on_wheeltec_robot wheeltec_lidar.launch.py
 \end{minted}
 \end{tcolorbox}
 
-\textbf{Turns on sensors?:}
+\textbf{Turns on sensors:}
+
 \begin{tcolorbox}[colback=NavajoWhite]
 \begin{minted}{bash}
-ros2 launch turn_on_wheletec_robot wheeltec_sensors.launch.py
+ros2 launch turn_on_wheeltec_robot wheeltec_sensors.launch.py
 \end{minted}
 \end{tcolorbox}
-
-\subsubsection*{Arguments}
-
-%TODO: Find out what all the arguments do!
-\begin{itemize}
-	\item ''\texttt{base\_serial.launch.py}''
-	\begin{itemize}
-		\item \textbf{Start serial port?}
-	\end{itemize}
-	\item ''\texttt{robot\_mode\_description.launch.py}''
-	\begin{itemize}
-		\item \textbf{Setup robot description?}
-	\end{itemize}
-	\item ''\texttt{robot\_mode\_description\_minibot.launch.py}''
-	\begin{itemize}
-		\item \textbf{Same as ''\texttt{robot\_mode\_description.launch.py}'' but for different type of robot?}
-	\end{itemize}
-	\item ''\texttt{robotandlidar.launch.py}''
-	\begin{itemize}
-		\item \textbf{Does the same as ''\texttt{turn\_on\_wheeltec.launch.py}'' robot?}
-	\end{itemize}
-	\item ''\texttt{turn\_on\_wheeltec\_robot.launch.py}''
-	\begin{itemize}
-		\item Turns on all the sensors of the Mecabot.
-	\end{itemize}
-	\item ''\texttt{wheeltec\_camera.launch.py}''
-	\begin{itemize}
-		\item Turns on the camera unit of the Mecabot.
-	\end{itemize}
-	\item ''\texttt{wheeltec\_ekf.launch.py}''
-	\begin{itemize}
-		\item \textbf{Turns on the EKF unit? [what is EKF?]}
-	\end{itemize}
-\end{itemize}
 
 \subsection{wheeltec\_cartographer}
 
+Used to create a map.
+
+\begin{tcolorbox}[colback=NavajoWhite]
+	\begin{minted}{bash}
+ros2 launch wheeltec_cartographer cartographer.launch.py
+	\end{minted}
+\end{tcolorbox}
+
+Create map with blind-spots
+
+\begin{tcolorbox}[colback=NavajoWhite]
+	\begin{minted}{bash}
+ros2 launch wheeltec_cartographer cartographer_with_blindspots.launch.py
+	\end{minted}
+\end{tcolorbox}
 
 
 \subsection{nav2\_map\_saver}
 
+Save a map created using cartographer
+
+\begin{tcolorbox}[colback=NavajoWhite]
+	\begin{minted}{bash}
+ros2 run nav2_map_server map_saver_cli -f <direcotry path>
+	\end{minted}
+\end{tcolorbox}
+
+
 \subsection{wheeltec\_nav2}
 
-\texttt{use\_sim\_time:=}
+\begin{tcolorbox}[colback=NavajoWhite]
+	\begin{minted}{bash}
+ros2 launch wheeltec_nav2 wheeltec_nav2.launch.py
+	\end{minted}
+\end{tcolorbox}
 
-\texttt{maps:=}
+\texttt{use\_sim\_time:=} can be True or False if you want to simulate the nav2 function.
+
+\texttt{maps:=} Directory where the map is located.
+
+\subsection{lidar\_filter}
+
+Turn on a LiDAR filter.
+
+\begin{tcolorbox}[colback=NavajoWhite]
+	\begin{minted}{bash}
+ros2 launch lidar_filter lidar_filter.launch.py
+	\end{minted}
+\end{tcolorbox}
+
+\newpage
