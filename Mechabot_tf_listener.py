@@ -1,5 +1,6 @@
 import rclpy
 from rclpy.node import Node
+from rclpy.duration import Duration
 from tf2_ros import Buffer, TransformListener
 import paho.mqtt.client as mqtt
 import json
@@ -9,6 +10,7 @@ import numpy as np
 
 broker = "localhost"
 topic = "test/topic"
+delaytijd = 0.5 #seconden
 
 client = mqtt.Client(callback_api_version=mqtt.CallbackAPIVersion.VERSION1)
 client.connect(broker)
@@ -17,14 +19,27 @@ class MapTFListener(Node):
     def __init__(self):
         super().__init__('map_tf_listener')
         self.get_logger().info("Node started!")
+        
+        #TF Mecabot X
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
         
+        #positie (x,y,Rz)
         self.x = None
         self.y = None
         self.yaw = None
         
-        self.timer = self.create_timer(1.0, self.lookup_position)
+        #MQTT
+        self.client = mqtt.Client(
+            callback_api_version=mqtt.CallbackAPIVersion.VERSION1
+        )
+        self.client.connect(broker)
+        self.client.loop_start()
+
+        #timers
+        self.create_timer(1.0, self.lookup_position)      # TF lookup 
+        self.create_timer(delaytijd, self.publish_data)   # MQTT publish 
+
 
     def lookup_position(self):
         self.get_logger().info("Attempting TF lookup...")
@@ -46,26 +61,34 @@ class MapTFListener(Node):
             
             roll, pitch, yaw = euler_from_quaternion([qx, qy, qz, qw])
             self.yaw = yaw
-            self.yaw_degree = np.rad2deg(yaw)
+            self.yaw_degree = np.rad2deg(yaw) #radialen naar graden
 
             self.get_logger().info(f"Position: x={self.x:.2f}, y={self.y:.2f}, yaw={self.yaw:.2f}")
         
         except Exception as e:
             self.get_logger().warn(f"TF error: {e}")
+            
+    def publish_data(self):
+        if self.x is None:
+            return
+
+        msg = json.dumps({
+            "x": self.x,
+            "y": self.y,
+            "yaw": self.yaw_degree
+        })
+
+        self.client.publish(topic, msg)
 
 def main():
     rclpy.init()
     node = MapTFListener()
 
     try:
-        while rclpy.ok():
-            rclpy.spin_once(node, timeout_sec=1.0)
-
-            if node.x is not None:
-                msg = json.dumps({"x": node.x, "y": node.y, "yaw": node.yaw_degree})
-                client.publish(topic, msg)
+        rclpy.spin(node)
     finally:
-        client.disconnect()
+        node.client.loop_stop()
+        node.client.disconnect()
         node.destroy_node()
         rclpy.shutdown()
 
