@@ -16,7 +16,7 @@ class ScanFilter : public rclcpp::Node
 public:
     ScanFilter() : Node("scan_filter")
     {
-        // Blindspot in Radian. Change to the angle you need.
+        // Blindspot in Degrees. Change to the angle you need.
         // When changing these values you need to run "colcon build" to recompile
         blind_1_start_ = 317.0 * M_PI / 180.0;  // Start blindspot (in degrees)
         blind_1_end_ = 337.0 * M_PI / 180.0;    // End blindstpot (in degrees)

@@ -15,7 +15,7 @@ def generate_launch_description():
     # Get the launch directory
     wheeltec_robot_dir = get_package_share_directory('turn_on_wheeltec_robot')
     wheeltec_launch_dir = os.path.join(wheeltec_robot_dir, 'launch')
-        
+
     my_nav_dir = get_package_share_directory('wheeltec_nav2')
     my_launch_dir = os.path.join(my_nav_dir, 'launch')
     my_map_dir = os.path.join(my_nav_dir, 'map')
@@ -29,8 +29,8 @@ def generate_launch_description():
     #param_top_akm_dl.yaml、param_four_wheel_diff_dl.yaml、param_four_wheel_diff_bs.yaml
     #If you want to use the DWB algorithm, you can change the input parameters to wheeltec-dwb.yaml
     my_param_dir = os.path.join(my_nav_dir, 'param','wheeltec_param')
-    my_param_file = 'param_dongguan.yaml'
-    
+    my_param_file = 'param_dongguan_v2.yaml'
+
     # Create the launch configuration variables
     namespace = LaunchConfiguration('namespace')
     use_namespace = LaunchConfiguration('use_namespace')
@@ -49,7 +49,8 @@ def generate_launch_description():
     # TODO(orduno) Substitute with `PushNodeRemapping`
     #              https://github.com/ros2/launch_ros/issues/56
     remappings = [('/tf', 'tf'),
-                  ('/tf_static', 'tf_static')]
+                  ('/tf_static', 'tf_static'),
+                  ('/scan', 'scanned')]
 
     # Create our own temporary YAML files that include substitutions
     param_substitutions = {
@@ -161,7 +162,7 @@ def generate_launch_description():
 
     ld.add_action(wheeltec_robot)
     ld.add_action(wheeltec_lidar)
-        
+
     # Declare the launch options
     ld.add_action(declare_namespace_cmd)
     ld.add_action(declare_use_namespace_cmd)

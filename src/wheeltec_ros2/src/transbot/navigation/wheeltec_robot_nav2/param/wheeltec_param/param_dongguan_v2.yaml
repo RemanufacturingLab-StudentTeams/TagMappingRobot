@@ -16,7 +16,7 @@ amcl:
     laser_likelihood_max_dist: 2.0
     laser_max_range: 100.0
     laser_min_range: -1.0
-    laser_model_type: "likelihood_field"
+    laser_model_type: "likelihood_field_prob" #changed!
     max_beams: 60
     max_particles: 2000
     min_particles: 500
@@ -30,14 +30,13 @@ amcl:
     save_pose_rate: 0.5
     sigma_hit: 0.02
     tf_broadcast: true
-    transform_tolerance: 0.3
+    transform_tolerance: 0.3 # thows out TF data after if the timestamp is older (or newer) than this value (in seconds)
     update_min_a: 0.06
     update_min_d: 0.025
-    z_hit: 0.7
+    z_hit: 0.7  # Parameters for the laser_model_type
     z_max: 0.001
     z_rand: 0.059
     z_short: 0.24
-    # scan_topic: scan
     scan_topic: scanned
 
     # Initial Pose
@@ -121,8 +120,8 @@ controller_server:
   ros__parameters:
     use_sim_time: False
     controller_frequency: 20.0
-    min_x_velocity_threshold: 0.001
-    min_y_velocity_threshold: 0.5
+    min_x_velocity_threshold: 0.001 # Below this threshold nav2 wil send 0 to the motor
+    min_y_velocity_threshold: 0.5 # Below this threshold nav2 wil send 0 to the motor
     min_theta_velocity_threshold: 0.001
     failure_tolerance: 0.3
     progress_checker_plugin: "progress_checker"
@@ -143,38 +142,37 @@ controller_server:
     general_goal_checker:
       stateful: True
       plugin: "nav2_controller::SimpleGoalChecker"
-      # xy_goal_tolerance: 0.25
       xy_goal_tolerance: 0.8
-      # yaw_goal_tolerance: 0.25
-      yaw_goal_tolerance: 0.8
+      yaw_goal_tolerance: 0.6
     # DWB parameters
     FollowPath:
       plugin: "dwb_core::DWBLocalPlanner"
       debug_trajectory_details: True
-      min_vel_x: -1.0
+      min_vel_x: -0.1 # Min speed in the x direction (m/s²)
       min_vel_y: 0.0
-      max_vel_x: 1.0
+      max_vel_x: 0.5 # Max speed in the x direction (m/s²)
       max_vel_y: 0.0
-      max_vel_theta: 1.5
+      max_vel_theta: 1.5 # Rotation speed in rad/s²
+      min_vel_thete: -1.5
       min_speed_xy: 0.0
-      max_speed_xy: 1.0
+      max_speed_xy: 0.5
       min_speed_theta: 0.0
       # Add high threshold velocity for turtlebot 3 issue.
       # https://github.com/ROBOTIS-GIT/turtlebot3_simulations/issues/75
-      acc_lim_x: 0.5
-      acc_lim_y: 0.0
+      acc_lim_x: 0.5 # Aceleration limit in the X direciton (m/s²)
+      acc_lim_y: 0.5 # Acceleration limit in the Y direciton (m/s²)
       acc_lim_theta: 1.0
-      decel_lim_x: -0.5
-      decel_lim_y: 0.0
+      decel_lim_x: -0.5 # Deseleartion limit in the X direciton (m/s²)
+      decel_lim_y: -0.5
       decel_lim_theta: -1.0
       vx_samples: 20
-      vy_samples: 0
+      vy_samples: 20
       vtheta_samples: 20
       sim_time: 1.7
       linear_granularity: 0.05
       angular_granularity: 0.025
       transform_tolerance: 0.2
-      xy_goal_tolerance: 0.25
+      xy_goal_tolerance: 0.8 # Radius around goal where it is oke (m)
       trans_stopped_velocity: 0.25
       short_circuit_trajectory_evaluation: True
       stateful: True
@@ -204,7 +202,7 @@ local_costmap:
       use_sim_time: False
       rolling_window: true
       width: 3
-      height: 3 
+      height: 3
       resolution: 0.05
       #robot_radius: 0.20
       footprint: "[ [-0.288, -0.303], [-0.288, 0.303],[0.288,0.303],[0.288, -0.303] ]"
@@ -222,19 +220,8 @@ local_costmap:
         z_voxels: 16
         max_obstacle_height: 2.0
         mark_threshold: 0
-        # observation_sources: scan
-        # scan:
-        #   topic: /scan
-        #   max_obstacle_height: 2.0
-        #   clearing: True
-        #   marking: True
-        #   data_type: "LaserScan"
-        #   raytrace_max_range: 10.0
-        #   raytrace_min_range: 0.0
-        #   obstacle_max_range: 2.5
-        #   obstacle_min_range: 0.0
-        observation_sources: scanned
-        scanned:
+        observation_sources: scan
+        scan:
           topic: /scanned
           max_obstacle_height: 2.0
           clearing: True
@@ -269,19 +256,8 @@ global_costmap:
       obstacle_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: True
-        # observation_sources: scan
-        # scan:
-        #   topic: /scan
-        #   max_obstacle_height: 2.0
-        #   clearing: True
-        #   marking: True
-        #   data_type: "LaserScan"
-        #   raytrace_max_range: 10.0
-        #   raytrace_min_range: 0.0
-        #   obstacle_max_range: 2.5
-        #   obstacle_min_range: 0.0
-        observation_sources: scanned
-        scanned:
+        observation_sources: scan
+        scan:
           topic: /scanned
           max_obstacle_height: 2.0
           clearing: True
@@ -379,4 +355,4 @@ waypoint_follower:
     wait_at_waypoint:
       plugin: "nav2_waypoint_follower::WaitAtWaypoint"
       enabled: True
-      waypoint_pause_duration: 200
+      waypoint_pause_duration: 2000 # How long to wait at a given waypoint in (ms)

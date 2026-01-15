@@ -28,7 +28,7 @@ from nav2_common.launch import RewrittenYaml
 
 def generate_launch_description():
     # Get the launch directory
-    
+
     #Modify the model parameter file, the options are：
     #param_mini_akm.yaml、param_mini_4wd.yaml、param_mini_diff.yaml、
     #param_mini_mec.yaml、param_mini_omni.yaml、param_mini_tank.yaml、
@@ -38,7 +38,7 @@ def generate_launch_description():
     #If you want to use the DWB algorithm, you can change the input parameters to wheeltec-dwb.yaml
     my_nav_dir = get_package_share_directory('wheeltec_nav2')
     my_param_dir = os.path.join(my_nav_dir, 'param','wheeltec_param')
-    my_param_file = 'param_dongguan.yaml'
+    my_param_file = 'param_dongguan_v2.yaml'
 
     namespace = LaunchConfiguration('namespace')
     use_sim_time = LaunchConfiguration('use_sim_time')
