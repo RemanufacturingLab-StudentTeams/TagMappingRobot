@@ -27,7 +27,7 @@ class Processor(threading.Thread):
         if (self.mqtt_config.get('enabled')):
             try:
                 print ("connecting")
-                self.mqtt_client = mqtt.Client(callback_api_version=mqtt.CallbackAPIVersion.VERSION1)
+                self.mqtt_client = mqtt.Client(client_id = self.mqtt_config.get('mqtt_name'), callback_api_version=mqtt.CallbackAPIVersion.VERSION1  )
                 self.mqtt_client.connect(self.mqtt_config.get('broker_host'), self.mqtt_config.get('broker_port'), 60)
             except Exception as e:
                 print (f"error connecting to broker:{e} ")                
@@ -82,9 +82,8 @@ class Processor(threading.Thread):
         if cycles:
             print("Processor: flushing remaining cycles before shutdown")
             self._process_batch(cycles)
-
-
-
+        
+        
     def _process_batch(self, cycles):
         # cycles is a list of 5 measurement cycles
         grouped = {}   # tag_id -> list of measurement dicts
@@ -104,6 +103,7 @@ class Processor(threading.Thread):
                 print("Localisation error for tag:", tag, e)
 
         if results:
+            print ("sending results", results)
             self._publish_batch(results)
         if self.interactive.get('write_to_excel'):
             data = []

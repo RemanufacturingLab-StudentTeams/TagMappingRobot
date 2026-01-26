@@ -167,7 +167,7 @@ class RFIDReader:
         try:
             start = time.time()
             raw = self.send_command(('$ba -go'.encode()))
-            print("RFID response time:", time.time() - start)
+            #print("RFID response time:", time.time() - start)
 
             lines = raw.split('\n')
             tags = self._extract_tag_details(lines)

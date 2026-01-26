@@ -3,16 +3,17 @@ import json
 import paho.mqtt.client as mqtt
 
 class MQTTPoseReceiver:
-    def __init__(self, broker="localhost", topic="robot/pose", port=1883, qos=1):
+    def __init__(self, broker="localhost", topic="robot/pose", name="runner", port=1883, qos=1):
         self.broker = broker
         self.topic = topic
         self.port = port
         self.qos = qos
+        self.name = name
 
         self._latest_pose = None
         self._lock = threading.Lock()
 
-        self.client = mqtt.Client(callback_api_version=mqtt.CallbackAPIVersion.VERSION1)
+        self.client = mqtt.Client( callback_api_version=mqtt.CallbackAPIVersion.VERSION1  )
         self.client.on_connect = self._on_connect
         self.client.on_message = self._on_message
 

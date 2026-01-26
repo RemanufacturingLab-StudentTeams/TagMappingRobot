@@ -203,9 +203,9 @@ def process_measurements(tag_id, measurements):
     # for each distance group compute rssi mean and a representative antenna row
     for dist_key in sorted(groups.keys()):
         grp = groups[dist_key]
-        if len(grp) < 2:
-            print (f"rejecting distance group {dist_key} for tag {tag_id} only has {len(grp)} measurment \n skipping to next group")
-            continue
+        # if len(grp) < 2:
+        #     print (f"rejecting distance group {dist_key} for tag {tag_id} only has {len(grp)} measurment \n skipping to next group")
+        #     continue
         
         # Reject inconsistent RSSI
         rssi_vals = [x['RSSI'] for x in grp]

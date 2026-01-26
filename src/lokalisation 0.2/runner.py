@@ -8,6 +8,7 @@ import traceback
 from rfid_reader import RFIDReader
 from processor import Processor
 from mqtt_listner import MQTTPoseReceiver
+import paho.mqtt.client as mqtt
 import db
 
 
@@ -50,7 +51,7 @@ def init(cfg):
     
     mecabot = None
     if (cfg['mecabot'].get('enabled')):
-        mecabot = MQTTPoseReceiver(broker=cfg['mecabot'].get('broker'), topic=cfg['mecabot'].get('topic'))
+        mecabot = MQTTPoseReceiver(broker=cfg['mecabot'].get('broker'), topic=cfg['mecabot'].get('topic'), name=cfg['mecabot'].get('name'))
         try:
             mecabot.start()
             print ("mecabot started")
@@ -81,16 +82,16 @@ def main():
     q, processor, reader, mecabot = init(cfg)
     measurements = None
     pose = None
-
+    
     try:
         while True:
 
             if cfg['mecabot'].get('enabled'):
-                pose = mecabot.get_pose()    
-                
-                x, y, yaw = pose
-                ant_pos = x, y, z, yaw - 90
-                print (f"measuring with pos:{pose}")
+                ant_pos = mecabot.get_pose()    
+                if ant_pos is not None:
+                    x, y, yaw = ant_pos
+                    ant_pos = x, y, z, yaw + 90
+                print (f"measuring with pos:{ant_pos}")
             else:
                 ant_pos = antenna_pos_interactive()
             if (ant_pos):
@@ -115,7 +116,7 @@ def main():
                 }, block=True)
 
             time.sleep(cfg.get('measurement_interval', 1.0))
-
+    
     except KeyboardInterrupt:
         print("\nRunner: stopped by user.")
     except Exception as e:
