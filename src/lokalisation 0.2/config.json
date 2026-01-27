@@ -25,7 +25,8 @@
     "MIN_RSSI": -85,
     "MAX_RSSI": -20,
     "DEFAULT_ELLIPSE": [0,1,1],
-    "MAX_VARIANCE_TRESHOLD": 6
+    "MAX_VARIANCE_TRESHOLD": 6,
+    "OVERLAP_METHOD": 1
   },
   "interactive": {
     "ask_tag_position_on_first_seen": false,

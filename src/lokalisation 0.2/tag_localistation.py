@@ -2,6 +2,8 @@ import numpy as np
 from scipy.interpolate import interp1d
 from shapely.geometry import MultiPolygon, Polygon as ShapelyPolygon
 from shapely.affinity import rotate
+from shapely.geometry import Point, MultiPoint
+from shapely.ops import unary_union
 
 import db
 
@@ -16,6 +18,7 @@ MIN_RSSI = -85
 MAX_RSSI = -20
 DEFAULT_ELLIPSE = [0,1,1] #rotation(deg), width(m), heigt(m)
 MAX_VARIANCE_TRESHOLD = 6
+OVERLAP_METHOD = 0
 
 # -------------------
 # Utility Functions
@@ -29,14 +32,16 @@ def validate_globals():
     assert len(DEFAULT_ELLIPSE) == 3
     assert MAX_VARIANCE_TRESHOLD >= 1
 
+
 def init_globals(cfg):
-    global MIN_POLY_AREA, POLY_SHAPE_RATIO, MIN_RSSI, MAX_RSSI, DEFAULT_ELLIPSE, MAX_VARIANCE_TRESHOLD
+    global MIN_POLY_AREA, POLY_SHAPE_RATIO, MIN_RSSI, MAX_RSSI, DEFAULT_ELLIPSE, MAX_VARIANCE_TRESHOLD, OVERLAP_METHOD
     MIN_POLY_AREA = cfg["MIN_POLY_AREA"]
     POLY_SHAPE_RATIO = cfg["POLY_SHAPE_RATIO"] 
     MIN_RSSI = cfg["MIN_RSSI"]
     MAX_RSSI = cfg["MAX_RSSI"]
     DEFAULT_ELLIPSE = cfg["DEFAULT_ELLIPSE"]
     MAX_VARIANCE_TRESHOLD = cfg["MAX_VARIANCE_TRESHOLD"]
+    OVERLAP_METHOD = cfg["OVERLAP_METHOD"]
     validate_globals()
 
 ##Get the average of the rms   
@@ -180,6 +185,73 @@ def find_core_intersection(polygons, min_area=0.0001):
         return None
     return core
 
+def estimate_location_with_uncertainty(
+    polygons,
+    prev_polygon=None,
+    grid_step=0.05,      # 5 cm
+    vote_fraction=0.8    # uncertainty contour
+):
+    """
+    Estimate location and uncertainty region via overlap voting.
+    Returns (x, y, uncertainty_polygon) or None.
+    """
+
+    if not polygons:
+        return None
+
+    union = unary_union(polygons)
+    if union.is_empty:
+        return None
+
+    xmin, ymin, xmax, ymax = union.bounds
+
+    xs = np.arange(xmin, xmax, grid_step)
+    ys = np.arange(ymin, ymax, grid_step)
+
+    vote_map = []
+    max_score = 0.0
+
+    for x in xs:
+        for y in ys:
+            p = Point(x, y)
+            score = 0.0
+
+            for poly in polygons:
+                if poly.contains(p):
+                    score += 1.0
+
+            if prev_polygon is not None and prev_polygon.contains(p):
+                score += 0.5   # soft bias
+
+            vote_map.append((x, y, score))
+            max_score = max(max_score, score)
+
+    if max_score <= 0:
+        return None
+
+    # --- points near the maximum define uncertainty ---
+    good_points = [
+        (x, y) for x, y, s in vote_map
+        if s >= vote_fraction * max_score
+    ]
+
+    if not good_points:
+        return None
+
+    xs, ys = zip(*good_points)
+    X = float(np.mean(xs))
+    Y = float(np.mean(ys))
+
+    # --- uncertainty polygon ---
+    uncertainty_poly = MultiPoint(good_points).convex_hull
+
+    # Clean up very thin shapes
+    if not uncertainty_poly.is_valid:
+        uncertainty_poly = uncertainty_poly.buffer(0)
+
+    return X, Y, uncertainty_poly
+
+
 def process_measurements(tag_id, measurements):
     """
     measurements: list of dicts for a single tag
@@ -202,11 +274,7 @@ def process_measurements(tag_id, measurements):
     shapely_polygons = []
     # for each distance group compute rssi mean and a representative antenna row
     for dist_key in sorted(groups.keys()):
-        grp = groups[dist_key]
-        # if len(grp) < 2:
-        #     print (f"rejecting distance group {dist_key} for tag {tag_id} only has {len(grp)} measurment \n skipping to next group")
-        #     continue
-        
+        grp = groups[dist_key]        
         # Reject inconsistent RSSI
         rssi_vals = [x['RSSI'] for x in grp]
         if np.std(rssi_vals) > MAX_VARIANCE_TRESHOLD:  # tuned threshold
@@ -252,23 +320,41 @@ def process_measurements(tag_id, measurements):
     if prev:
         shapely_polygons.append(prev)
 
-    common = find_core_intersection(shapely_polygons)
-    if common is None or common.is_empty:
-        print (f"No common intersection for tag {tag_id}")
-        return(None)
+    if (OVERLAP_METHOD == 0):
+        common = find_core_intersection(shapely_polygons)
+        if common is None or common.is_empty:
+            print (f"No common intersection for tag {tag_id}")
+            return(None)
+            
+    
+        db.save_polygon(tag_id, common)
+    
+        if common.geom_type == "MultiPolygon":
+            common = min(common.geoms, key=lambda p: p.area)
+    
+        centroid = common.centroid
+
+    if (OVERLAP_METHOD == 1):
+        estimate = estimate_location_with_uncertainty(
+            shapely_polygons,
+            prev_polygon=prev,
+            grid_step=0.05,
+            vote_fraction=0.8
+        )
         
-
-    db.save_polygon(tag_id, common)
-
-    if common.geom_type == "MultiPolygon":
-        common = min(common.geoms, key=lambda p: p.area)
-
-    centroid = common.centroid
+        if estimate is None:
+            return None
+        
+        X, Y , common= estimate
+        centroid= X,Y
+        db.save_polygon(tag_id, common)
+    
     try:
         rotation, width, height = enclosing_ellipse(common)
     except Exception as e:
         print (f"error calculting ellipse for tag {tag_id}: {e}\n using default ellipse")
         rotation, width, height = DEFAULT_ELLIPSE
+
 
     return {
         "ID": tag_id,

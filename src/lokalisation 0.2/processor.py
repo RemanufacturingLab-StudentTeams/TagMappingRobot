@@ -29,12 +29,14 @@ class Processor(threading.Thread):
                 print ("connecting")
                 self.mqtt_client = mqtt.Client(client_id = self.mqtt_config.get('mqtt_name'), callback_api_version=mqtt.CallbackAPIVersion.VERSION1  )
                 self.mqtt_client.connect(self.mqtt_config.get('broker_host'), self.mqtt_config.get('broker_port'), 60)
+                self.client.loop_start()
             except Exception as e:
                 print (f"error connecting to broker:{e} ")                
         
     def stop(self):
         
         if self.mqtt_config.get('enabled'):
+            self.client.loop_stop()
             self.mqtt_client.disconnect()
             print ("mqtt HMI: disconnected.")
         self._stop.set()
