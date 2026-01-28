@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from shapely.geometry import LineString
 from scipy.interpolate import interp1d
 from matplotlib.patches import Polygon
 from shapely.geometry import Polygon as ShapelyPolygon
@@ -8,6 +7,8 @@ import pandas as pd
 import os
 import glob
 import time
+
+RFID_DATA_FILES = 'rfid_data_280126_135200.xlsx'
 
 # -------------------
 # Constants
@@ -71,16 +72,11 @@ inverse_rssi = interp1d(
 def solve_distance(rssi, init=1.5):
     return float(inverse_rssi(rssi))
 
-def simplify_polygon(x, y, tolerance=0.01):
-    line = LineString(np.column_stack([x, y]))
-    simplified = line.simplify(tolerance)
-    return np.array(simplified.xy)
-
 def rotate_points(x, y, angle_deg):
     """Rotate points (x, y) by angle_deg around the origin."""
     angle_rad = np.radians(-angle_deg - 90)
     x_rot = x * np.cos(angle_rad) - y * np.sin(angle_rad)
-    y_rot = x * np.sin(angle_rad) + y * np.cos(angle_rad)
+    y_rot = -x * np.sin(angle_rad) - y * np.cos(angle_rad)
     return x_rot, y_rot
 
 def translate_points(x, y, ant_x, ant_y):
@@ -128,11 +124,9 @@ def create_single_plot(rssi_received, ant_x, ant_y, beta, location_num, all_ante
     rms_rssi = get_rms_rssi(rssi_received)
     upper_rssi = rssi_received + rms_rssi
     lower_rssi = rssi_received - rms_rssi
-    x_upper, y_upper = plot_curve(upper_rssi, ant_x, ant_y, beta, angles, angles_rad, '-', f'Upper bound')
-    #x_upper, y_upper = simplify_polygon(x_upper, y_upper, tolerance=0.01)
-    x_lower, y_lower = plot_curve(lower_rssi, ant_x, ant_y, beta, angles, angles_rad, '-', f'Lower bound')
-    #x_lower, y_lower = simplify_polygon(x_lower, y_lower, tolerance=0.01)
-    x_nominal, y_nominal = plot_curve(rssi_received, ant_x, ant_y, beta, angles, angles_rad, '--', f'Nominal')
+    x_upper, y_upper = plot_curve(upper_rssi, ant_x, ant_y, beta, angles, angles_rad)
+    x_lower, y_lower = plot_curve(lower_rssi, ant_x, ant_y, beta, angles, angles_rad)
+    x_nominal, y_nominal = plot_curve(rssi_received, ant_x, ant_y, beta, angles, angles_rad, '--')
     color = plt.cm.rainbow(0) if len(all_antennas) == 0 else plt.cm.rainbow((location_num - 1) / len(all_antennas))
     plt.plot(ant_x, ant_y, 'o', color=color, label=f'Antenna {location_num}', markersize=8)
     plt.text(ant_x, ant_y, f'({ant_x:.2f}, {ant_y:.2f})', fontsize=8, ha='left', va='bottom')
@@ -142,7 +136,7 @@ def create_single_plot(rssi_received, ant_x, ant_y, beta, location_num, all_ante
     plt.plot(tag_x, tag_y, 'k+', label='Tag', markersize=12, markeredgewidth=2)
     plt.text(tag_x, tag_y, f'({tag_x:.2f}, {tag_y:.2f})', fontsize=8, ha='left', va='bottom')
     polygon_points = make_polygon_points(x_upper, y_upper, x_lower, y_lower)
-    polygon = Polygon(polygon_points, facecolor=color, edgecolor='none', hatch='//////', alpha=0.2, label=f'Intersection Area')
+    polygon = Polygon(polygon_points, facecolor=color, edgecolor='none', hatch='//////', alpha=0.2, label='Intersection Area')
     plt.gca().add_patch(polygon)
     plt.plot(0, 0, 'r+', label='Origin (0,0)', markersize=10)
     plt.text(0, 0, '(0.00, 0.00)', fontsize=8, ha='left', va='bottom')
@@ -433,100 +427,100 @@ def process_tag_data(excel_file):
     xl = pd.ExcelFile(excel_file)
     start = time.time()
     all_tags_data = {}
-    for sheet_name in xl.sheet_names:
-        if sheet_name == 'All Data':
-            continue
-        df = pd.read_excel(excel_file, sheet_name=sheet_name)
-        unique_distances = df['Distance [m]'].unique()
-        num_locations = len(unique_distances)
-        if num_locations < 2:
-            continue
-        all_data = []
-        all_antennas = []
-        tag_x = df['Tag X [m]'].iloc[0]
-        tag_y = df['Tag Y [m]'].iloc[0]
-        for distance in unique_distances:
-            distance_data = df[df['Distance [m]'] == distance]
-            try:
-                max_rssi_row = distance_data.loc[distance_data['RSSI'].idxmax()]
-            except Exception as e:
-                print(f"error calculting max_rssi_row for tag {sheet_name}: {e}\n Skiping to next")
-                continue
-            rssi_received = distance_data['RSSI'].mean()
-            beta = max_rssi_row['Antenna Rot Z [deg]']
-            beta = beta 
-            ant_x = max_rssi_row['Antenna X [m]']
-            ant_y = max_rssi_row['Antenna Y [m]']
-            curve_start = time.time()
-            try:
-                curves = create_single_plot(rssi_received, ant_x, ant_y, beta, len(all_data)+1, all_antennas, tag_x, tag_y, sheet_name)
-            except Exception as e:
-                print (f"error creating single plot for tag {sheet_name}: {e}\n Skipping to next")
-                continue
-            curve_stop = time.time()
-            #print ("cyrve time", curve_stop-curve_start)
-            all_data.append((rssi_received, ant_x, ant_y, beta, curves))
-            all_antennas.append((rssi_received, ant_x, ant_y, beta, curves))
-        create_combined_plot(all_data, tag_x, tag_y, sheet_name)
-        create_intersection_plot(all_data, tag_x, tag_y, sheet_name)
-        shapely_polygons = []
-        for _, _, _, _, curves in all_data:
-            x_upper, y_upper, x_lower, y_lower, _, _ = curves
-            polygon_points = make_polygon_points(x_upper, y_upper, x_lower, y_lower)
-            poly = ShapelyPolygon(polygon_points)
-            
-            if not poly.is_valid:
-                poly = poly.buffer(0)
-            
-            # Reject polygons that are too thin or too tiny
-            if poly.area < MIN_POLY_AREA:   # ~0.1 cm²
-                print (f"Rejected poly:{poly} area to small")
-                continue
-            
-            # Reject polygons with weird geometry
-            if poly.length / (2 * np.sqrt(np.pi * poly.area)) > POLY_SHAPE_RATIO:
-                # Perimeter too large for the area: suspicious shape
-                print (f"Rejected poly:{poly} weird shape")
-                continue
-            shapely_polygons.append(poly)
-        OVERLAP_METHODE = 1
-        if (OVERLAP_METHODE == 0):
-            common = find_core_intersection(shapely_polygons)
-            if common is None or common.is_empty:
-                return(None)
+    try:
+        with pd.ExcelFile(excel_file) as xl:
+            for sheet_name in xl.sheet_names:
+                if sheet_name == 'All Data':
+                    continue
+                df = pd.read_excel(xl, sheet_name=sheet_name)
+                unique_distances = df['Distance [m]'].unique()
+                num_locations = len(unique_distances)
+                if num_locations < 2:
+                    continue
+                all_data = []
+                all_antennas = []
+                tag_x = df['Tag X [m]'].iloc[0]
+                tag_y = df['Tag Y [m]'].iloc[0]
+                for distance in unique_distances:
+                    distance_data = df[df['Distance [m]'] == distance]
+                    try:
+                        max_rssi_row = distance_data.loc[distance_data['RSSI'].idxmax()]
+                    except Exception as e:
+                        print(f"error calculting max_rssi_row for tag {sheet_name}: {e}\n Skiping to next")
+                        continue
+                    rssi_received = distance_data['RSSI'].mean()
+                    beta = max_rssi_row['Antenna Rot Z [deg]']
+                    ant_x = max_rssi_row['Antenna X [m]']
+                    ant_y = max_rssi_row['Antenna Y [m]']
+                    try:
+                        curves = create_single_plot(rssi_received, ant_x, ant_y, beta, len(all_data)+1, all_antennas, tag_x, tag_y, sheet_name)
+                    except Exception as e:
+                        print (f"error creating single plot for tag {sheet_name}: {e}\n Skipping to next")
+                        continue
+                    all_data.append((rssi_received, ant_x, ant_y, beta, curves))
+                    all_antennas.append((rssi_received, ant_x, ant_y, beta, curves))
+                create_combined_plot(all_data, tag_x, tag_y, sheet_name)
+                create_intersection_plot(all_data, tag_x, tag_y, sheet_name)
+                shapely_polygons = []
+                for _, _, _, _, curves in all_data:
+                    x_upper, y_upper, x_lower, y_lower, _, _ = curves
+                    polygon_points = make_polygon_points(x_upper, y_upper, x_lower, y_lower)
+                    poly = ShapelyPolygon(polygon_points)
+                    
+                    if not poly.is_valid:
+                        poly = poly.buffer(0)
+                    
+                    # Reject polygons that are too thin or too tiny
+                    if poly.area < MIN_POLY_AREA:   # ~0.1 cm²
+                        print (f"Rejected poly:{poly} area to small")
+                        continue
+                    
+                    # Reject polygons with weird geometry
+                    if poly.length / (2 * np.sqrt(np.pi * poly.area)) > POLY_SHAPE_RATIO:
+                        # Perimeter too large for the area: suspicious shape
+                        print (f"Rejected poly:{poly} weird shape")
+                        continue
+                    shapely_polygons.append(poly)
+                OVERLAP_METHODE = 1
+                if (OVERLAP_METHODE == 0):
+                    common = find_core_intersection(shapely_polygons)
+                    if common is None or common.is_empty:
+                        return(None)
+                        
+                
+                
+                    if common.geom_type == "MultiPolygon":
+                        common = min(common.geoms, key=lambda p: p.area)
+                    if common is not None and not common.is_empty:
+                        centroid = common.centroid
+                        centroids = (centroid.x, centroid.y)
+                
+                if (OVERLAP_METHODE == 1):
+                    estimate = estimate_location_with_uncertainty(
+                        shapely_polygons,
+                        grid_step=0.05,
+                        vote_fraction=0.7
+                    )
+                                
+                    if estimate is None:
+                        return None
+                    
+                    X, Y, common  = estimate
+                    centroids = X,Y
+                    # build a small uncertainty polygon for persistence
+        
                 
         
-        
-            if common.geom_type == "MultiPolygon":
-                common = min(common.geoms, key=lambda p: p.area)
-            if common is not None and not common.is_empty:
-                centroid = common.centroid
-                centroids = (centroid.x, centroid.y)
-        
-        if (OVERLAP_METHODE == 1):
-            estimate = estimate_location_with_uncertainty(
-                shapely_polygons,
-                grid_step=0.05,
-                vote_fraction=0.7
-            )
-                        
-            if estimate is None:
-                return None
-            
-            X, Y, common  = estimate
-            centroids = X,Y
-            # build a small uncertainty polygon for persistence
-
-        
-
-        print (centroids)
-        all_tags_data[sheet_name] = {
-            'tag_x': tag_x,
-            'tag_y': tag_y,
-            'centroids': centroids,
-            'intersection_polygon': common
-        }
-        plt.show()
+                print (centroids)
+                all_tags_data[sheet_name] = {
+                    'tag_x': tag_x,
+                    'tag_y': tag_y,
+                    'centroids': centroids,
+                    'intersection_polygon': common
+                }
+                plt.show()
+    except Exception as e:
+        print(f"Error processing {excel_file}: {e}")
     create_all_tags_plot(all_tags_data)
     #print (all_tags_data)
     plt.show()
@@ -534,7 +528,7 @@ def process_tag_data(excel_file):
     print ("full time =", end - start,"sec")
 
 if __name__ == "__main__":
-    excel_files = glob.glob('rfid_data_280126_104613.xlsx')
+    excel_files = glob.glob(RFID_DATA_FILES)
     if not excel_files:
         print("No RFID data files found in the current directory!")
         exit(1)

@@ -15,6 +15,8 @@ tsl_parity = 'N'
 tsl_stopbits = 1
 tsl_timeout = 2
 
+COM_PORT = "COM3"
+
 def find_port(portname):
     """Scan for a COM port that includes the given port name and return its device name."""
     ports = serial.tools.list_ports.comports()
@@ -140,7 +142,7 @@ def get_valid_float(prompt):
 
 if __name__ == "__main__":
     try:
-        ser = serial.Serial('COM3', baudrate=tsl_baudrate, bytesize=tsl_bytesize, 
+        ser = serial.Serial(COM_PORT, baudrate=tsl_baudrate, bytesize=tsl_bytesize, 
                           parity=tsl_parity, stopbits=tsl_stopbits, timeout=tsl_timeout)
     except Exception as e:
         print(f"Error opening serial port: {e}")

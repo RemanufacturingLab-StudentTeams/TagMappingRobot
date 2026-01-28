@@ -112,9 +112,9 @@ def solve_distance(rssi, init=1.5):
 
 def rotate_points(x, y, angle_deg):
     """Rotate points (x, y) by angle_deg around the origin."""
-    angle_rad = np.radians(-angle_deg)
-    x_rot = x * np.cos(angle_rad) - y * np.sin(angle_rad)
-    y_rot = x * np.sin(angle_rad) + y * np.cos(angle_rad)
+    angle_rad = np.radians(-angle_deg - ALPHA)
+    x_rot =  x * np.cos(angle_rad) - y * np.sin(angle_rad)
+    y_rot = -x * np.sin(angle_rad) - y * np.cos(angle_rad)
     return x_rot, y_rot
 
 def translate_points(x, y, ant_x, ant_y):

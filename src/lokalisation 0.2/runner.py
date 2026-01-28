@@ -16,10 +16,15 @@ import db
 CONFIG_FILE = "config.json"
 
 def load_config():
+    """Load configuration file"""
     with open(CONFIG_FILE, 'r') as f:
         return json.load(f)
 
 def antenna_pos_interactive():
+    """
+    manual measurment location input
+    Returns (x, y, z, rot Z)
+    """
     try:
         x = float(input("Antenna X [m]: "))
         y = float(input("Antenna Y [m]: "))
@@ -27,15 +32,32 @@ def antenna_pos_interactive():
         rot = float(input("Antenna Rot Z [deg]: "))
         return (x, y, z, rot)
     except Exception as e:
-        print(f"Failed to get antenna values:{e}, sending 0")
+        print(f"Failed to get manual antenna values:{e}, sending 0")
         return (0,0,0,0)
 
 def tag_pos_interactive(tag_id):
-    x = float(input(f"Tag {tag_id} X [m]: "))
-    y = float(input(f"Tag {tag_id} Y [m]: "))
-    return (x, y)
+    """
+    Manual tag location input
+    Returns (x, y)
+    """
+    try:
+        x = float(input(f"Tag {tag_id} X [m]: "))
+        y = float(input(f"Tag {tag_id} Y [m]: "))
+        return (x, y)
+    except Exception as e:
+        print (f"faild to get manual tag location:{e}, using x,y = 0")
+        return(0,0)
 
 def init(cfg):
+    """
+    Parameters
+    ----------
+    cfg : config file
+
+    Returns
+    -------
+    (data queue, processor, reader, mecabot)
+    """
     q = queue.Queue(maxsize=cfg['max_size'])  # blocks when full
     
     processor = Processor(q,
@@ -47,7 +69,6 @@ def init(cfg):
     processor.start()
     
     reader = RFIDReader(rfid_port = cfg['rfid_port'], antenna_power = cfg['antenna_power'], antenna_number = cfg['antenna_number'])
-    reader.set_save_directory(cfg['interactive'].get('raw_folder')) 
     
     mecabot = None
     if (cfg['mecabot'].get('enabled')):
@@ -66,43 +87,30 @@ def init(cfg):
         processor.stop()
         sys.exit(1)
         
-    db.init_db()
+    db.init_db(File_name = cfg['lokalisation_config'].get['DATABASE_FILE'])
     print("Runner: started. Press Ctrl+C to stop.")
     return(q, processor, reader, mecabot)
 
-def get_delta(new, old):
-    x = abs(new[0]-old[0])
-    y = abs(new[1]-old[1])
-    return (np.sqrt(x*x+y*y))
-
 def main():
     
-    cfg = load_config()
-    z = cfg['Z_value']
-    q, processor, reader, mecabot = init(cfg)
-    measurements = None
+    cfg = load_config() 	# get config file
+    z = cfg['Z_value']  # set z value to preset z, for later use when implementing z axis in localisation
+    q, processor, reader, mecabot = init(cfg)   # set all classes
+    measurements = None     # set measuremnts to None to prevent undifend states
     
     try:
         while True:
 
-            if cfg['mecabot'].get('enabled'):
+            if cfg['mecabot'].get('enabled'):   #Get antenna position from mecabot when enabled if diabled default to manual
                 ant_pos = mecabot.get_pose()    
                 if ant_pos is not None:
                     x, y, yaw = ant_pos
-                    ant_pos = x, y, z, yaw + 90
+                    ant_pos = x, y, z, yaw + 90     #add 90 degrees to rotation to compensate for rotated antenna mounting 
                 print (f"measuring with pos:{ant_pos}")
             else:
                 ant_pos = antenna_pos_interactive()
-            if (ant_pos):
+            if (ant_pos):   
                 measurements = reader.perform_measurement(ant_pos)
-
-            # check for unknown tags and optionally prompt user
-            if cfg['interactive'].get('ask_tag_position_on_first_seen', True):
-                unknowns = [m['_unknown_tag'] for m in measurements if '_unknown_tag' in m]
-                if unknowns:
-                    for ID in unknowns:
-                        x,y = tag_pos_interactive(ID)
-                        reader.add_tag_location(ID, x, y)
 
             # push measurements into queue (blocks if full)
             if (measurements):

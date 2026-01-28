@@ -3,9 +3,6 @@ import time
 import serial
 import serial.tools.list_ports
 from math import sqrt
-from datetime import datetime
-import os
-import pandas as pd
 
 TSL_BAUDRATE = 921600
 TSL_BYTESIZE = 8
@@ -13,7 +10,6 @@ TSL_PARITY = 'N'
 TSL_STOPBITS = 1
 TSL_TIMEOUT = 0.1
 
-save_directory = None
 
 class RFIDReader:
     def __init__(self, rfid_port="/dev/ttyUSB0", antenna_power=3000, antenna_number=3):
@@ -21,7 +17,6 @@ class RFIDReader:
         self.antenna_power = antenna_power
         self.antenna_number = antenna_number
         self.ser = None
-        self.tag_locations = {}  # tag_id -> (x,y)
 
 
     def calculate_checksum(self, command_bytes: bytes) -> bytes:
@@ -62,13 +57,13 @@ class RFIDReader:
             # Timeout
             if time.time() - start > timeout:
                 break
-    
-            # prevent busy wait
+            
             time.sleep(0.001)
     
         return buffer.decode("utf-8", errors="ignore")
 
     def setup_connection(self):
+        """Start antenna connection"""
         self.ser = serial.Serial(
             self.rfid_port,
             baudrate=TSL_BAUDRATE,
@@ -79,7 +74,6 @@ class RFIDReader:
             write_timeout=0.05
         )
     
-        # FAST antenna init (no debug, no metadata)
         inventory_command = f'$ir -bnx0 -sex0 -tax0 -slx0 -dtx1 -anx{self.antenna_number} -dbx{hex(self.antenna_power)[2:]} -trxFFFF'
 
         lines = self.send_command(inventory_command.encode()).split("\n")
@@ -93,6 +87,7 @@ class RFIDReader:
         print(f"RFIDReader opened on {self.rfid_port}, antenna={self.antenna_number}")
 
     def close(self):
+        """Closes antenna connection cleanly"""
         try:
             if self.ser and getattr(self.ser, "is_open", False):
                 self.ser.close()
@@ -102,33 +97,29 @@ class RFIDReader:
 
     @staticmethod
     def calculate_distance(x, y, z):
+        """
+        Parameters
+        ----------
+        x : float
+        y : float
+        z : float
+
+        Returns
+        -------
+        distance to 0 : float
+        """
         return round(sqrt(x**2 + y**2 + z**2), 3)
     
-    def save_to_excel(self, custom_dir=None, data=None):
-        timestamp = datetime.now().strftime('%d%m%y_%H%M%S')
-        filename = f'rfid_data_{timestamp}.xlsx'
-        
-        directory = custom_dir or save_directory or os.getcwd()
-        os.makedirs(directory, exist_ok=True)
-        filepath = os.path.join(directory, filename)
-
-        df = pd.DataFrame(data)
-
-        with pd.ExcelWriter(filepath, engine='openpyxl') as writer:
-            df.to_excel(writer, sheet_name='All Data', index=False)
-            for tag_id, group_data in df.groupby('Tag ID'):
-                sheet_name = str(tag_id)[:31]
-                group_data.to_excel(writer, sheet_name=sheet_name, index=False)
-
-        print(f'Raw data saved to {filename}')
-        
-    def set_save_directory(self, path)-> str:
-        """Set a custom directory for saving output files."""
-        global save_directory
-        save_directory = path
-        print(f"Save directory set to: {os.path.abspath(save_directory)}")
-
     def _extract_tag_details(self, lines):
+        """
+        Parameters
+        ----------
+        lines : list of raw rfid data
+
+        Returns
+        -------
+        tags : list of Tag ID, RSSI, Antenna
+        """
         tags = []
         current_antenna = 'Unknown'
         for line in lines:
@@ -165,20 +156,17 @@ class RFIDReader:
         ant_x, ant_y, ant_z, ant_rot_z = antenna_pos
         distance = self.calculate_distance(ant_x, ant_y, ant_z)
         try:
-            start = time.time()
             raw = self.send_command(('$ba -go'.encode()))
-            #print("RFID response time:", time.time() - start)
 
             lines = raw.split('\n')
             tags = self._extract_tag_details(lines)
 
             results = []
             for tag in tags:
-                #print (f"detected ID:{tag}")
                 results.append({
                     'Tag ID': tag['Tag ID'],
                     'RSSI': tag['RSSI'],
-                    'Antenna': self.antenna_number,
+                    'Antenna': tag['Antenna'],
                     'Antenna X [m]': ant_x,
                     'Antenna Y [m]': ant_y,
                     'Antenna Z [m]': ant_z,

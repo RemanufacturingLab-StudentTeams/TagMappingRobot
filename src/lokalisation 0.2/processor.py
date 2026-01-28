@@ -12,7 +12,7 @@ import pandas as pd
 
 class Processor(threading.Thread):
     def __init__(self, work_queue: queue.Queue,
-                 batch_count=5, mqtt_config=None, interactive=None, write_folder='./raw_data',lokalisation_config=None):
+                 batch_count=5, mqtt_config=None, interactive=None,lokalisation_config=None):
         super().__init__(daemon=True)
         self.q = work_queue
         self.batch_count = batch_count
@@ -20,7 +20,6 @@ class Processor(threading.Thread):
         self._stop = threading.Event()
         self.mqtt_config = mqtt_config
         self.interactive = interactive
-        self.write_folder = write_folder
         tla.init_globals(lokalisation_config)
         
         # setup mqtt if enabled
@@ -34,7 +33,7 @@ class Processor(threading.Thread):
                 print (f"error connecting to broker:{e} ")                
         
     def stop(self):
-        
+        """close mqtt connection and stop proces loop"""
         if self.mqtt_config.get('enabled'):
             self.mqtt_client.loop_stop()
             self.mqtt_client.disconnect()
@@ -43,10 +42,20 @@ class Processor(threading.Thread):
         print ("processor: Stopped")
         
     def save(self, data, name):
+        """
+        Parameters
+        ----------
+        data : dict
+            data to be saved.
+        name : string
+            name of file.
+        -------
+        Saves data to a xlsx file
+        """
         timestamp = datetime.now().strftime('%d%m%y_%H%M%S')
         filename = f'{name}{timestamp}.xlsx'
         
-        directory = self.write_folder
+        directory = self.interactive.get('write_folder')
         os.makedirs(directory, exist_ok=True)
         filepath = os.path.join(directory, filename)
 
@@ -57,6 +66,14 @@ class Processor(threading.Thread):
         print(f'Results saved to {filename}')
 
     def _publish_batch(self, results):
+        """
+        Parameters
+        ----------
+        results : dict with keys ID,X,Y,r,w,h 
+        -------
+        publishes data to mqtt with HMI topic
+
+        """
         payload = json.dumps(results)
         topic = self.mqtt_config.get('topic')
 
@@ -69,6 +86,7 @@ class Processor(threading.Thread):
                 print("Processor: MQTT publish error:", e)
 
     def run(self):
+        """gets data from queue and processes when enough data is present"""
         cycles = []
         while not self._stop.is_set():
             try:
@@ -88,6 +106,7 @@ class Processor(threading.Thread):
         
         
     def _process_batch(self, cycles):
+        """" groups data per tag ID and proceses it """
         # cycles is a list of 5 measurement cycles
         grouped = {}   # tag_id -> list of measurement dicts
         for cycle in cycles:

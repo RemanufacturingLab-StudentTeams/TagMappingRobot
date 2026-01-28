@@ -43,7 +43,7 @@ class MQTTPoseReceiver:
             print("MQTT decode error:", e)
 
     def get_pose(self):
-        """Return the latest pose as (x, y, yaw) or None if not available."""
+        """Return the latest pose as (x, y, yaw) in meters and degrees or None if not available."""
         with self._lock:
             if self._latest_pose:
                 return (

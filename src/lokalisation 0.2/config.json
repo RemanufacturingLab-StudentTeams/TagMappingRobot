@@ -29,9 +29,8 @@
     "OVERLAP_METHOD": 1
   },
   "interactive": {
-    "ask_tag_position_on_first_seen": false,
-    "write_to_excel": true,
-    "raw_folder" : "./raw_data",
+    "write_to_excel": false,
+    "write_folder" : "./raw_data",
     "RSSI_file"  : "rfid_data_",
     "result_file": "results_"
   }
