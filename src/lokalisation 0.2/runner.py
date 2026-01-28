@@ -9,7 +9,6 @@ import traceback
 from rfid_reader import RFIDReader
 from processor import Processor
 from mqtt_listner import MQTTPoseReceiver
-import paho.mqtt.client as mqtt
 import db
 
 
@@ -82,7 +81,6 @@ def main():
     z = cfg['Z_value']
     q, processor, reader, mecabot = init(cfg)
     measurements = None
-    pose = None
     
     try:
         while True:

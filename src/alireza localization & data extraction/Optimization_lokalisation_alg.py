@@ -14,7 +14,7 @@ import time
 # -------------------
 ALPHA = 90  # Angle in degrees
 VECTOR_LENGTH = 0.2  # Arrow length for antenna orientation
-PLOT_LIMITS = (-0.5, 5)
+PLOT_LIMITS = (-4, 8)
 GRID_STEP = 0.5
 
 
@@ -78,7 +78,7 @@ def simplify_polygon(x, y, tolerance=0.01):
 
 def rotate_points(x, y, angle_deg):
     """Rotate points (x, y) by angle_deg around the origin."""
-    angle_rad = np.radians(-angle_deg)
+    angle_rad = np.radians(-angle_deg - 90)
     x_rot = x * np.cos(angle_rad) - y * np.sin(angle_rad)
     y_rot = x * np.sin(angle_rad) + y * np.cos(angle_rad)
     return x_rot, y_rot
@@ -355,6 +355,78 @@ def create_all_tags_plot(tags_data):
     plt.title('Tag Positions and Intersection Areas Map')
     plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
     plt.tight_layout()
+    
+from shapely.geometry import Point, MultiPoint
+from shapely.ops import unary_union
+import numpy as np
+
+def estimate_location_with_uncertainty(
+    polygons,
+    prev_polygon=None,
+    grid_step=0.05,      # 5 cm
+    vote_fraction=0.8    # uncertainty contour
+):
+    """
+    Estimate location and uncertainty region via overlap voting.
+    Returns (x, y, uncertainty_polygon) or None.
+    """
+
+    if not polygons:
+        return None
+
+    union = unary_union(polygons)
+    if union.is_empty:
+        return None
+
+    xmin, ymin, xmax, ymax = union.bounds
+
+    xs = np.arange(xmin, xmax, grid_step)
+    ys = np.arange(ymin, ymax, grid_step)
+
+    vote_map = []
+    max_score = 0.0
+
+    for x in xs:
+        for y in ys:
+            p = Point(x, y)
+            score = 0.0
+
+            for poly in polygons:
+                if poly.contains(p):
+                    score += 1.0
+
+            if prev_polygon is not None and prev_polygon.contains(p):
+                score += 0.5   # soft bias
+
+            vote_map.append((x, y, score))
+            max_score = max(max_score, score)
+
+    if max_score <= 0:
+        return None
+
+    # --- points near the maximum define uncertainty ---
+    good_points = [
+        (x, y) for x, y, s in vote_map
+        if s >= vote_fraction * max_score
+    ]
+
+    if not good_points:
+        return None
+
+    xs, ys = zip(*good_points)
+    X = float(np.mean(xs))
+    Y = float(np.mean(ys))
+
+    # --- uncertainty polygon ---
+    uncertainty_poly = MultiPoint(good_points).convex_hull
+
+    # Clean up very thin shapes
+    if not uncertainty_poly.is_valid:
+        uncertainty_poly = uncertainty_poly.buffer(0)
+
+    return X, Y, uncertainty_poly
+
+
 
 def process_tag_data(excel_file):
     """Process tag data from an Excel file and generate plots for each tag."""
@@ -382,6 +454,7 @@ def process_tag_data(excel_file):
                 continue
             rssi_received = distance_data['RSSI'].mean()
             beta = max_rssi_row['Antenna Rot Z [deg]']
+            beta = beta 
             ant_x = max_rssi_row['Antenna X [m]']
             ant_y = max_rssi_row['Antenna Y [m]']
             curve_start = time.time()
@@ -416,16 +489,42 @@ def process_tag_data(excel_file):
                 print (f"Rejected poly:{poly} weird shape")
                 continue
             shapely_polygons.append(poly)
-        common_intersection = find_core_intersection(shapely_polygons)
-        centroids = None
-        if common_intersection is not None and not common_intersection.is_empty:
-            centroid = common_intersection.centroid
-            centroids = (centroid.x, centroid.y)
+        OVERLAP_METHODE = 1
+        if (OVERLAP_METHODE == 0):
+            common = find_core_intersection(shapely_polygons)
+            if common is None or common.is_empty:
+                return(None)
+                
+        
+        
+            if common.geom_type == "MultiPolygon":
+                common = min(common.geoms, key=lambda p: p.area)
+            if common is not None and not common.is_empty:
+                centroid = common.centroid
+                centroids = (centroid.x, centroid.y)
+        
+        if (OVERLAP_METHODE == 1):
+            estimate = estimate_location_with_uncertainty(
+                shapely_polygons,
+                grid_step=0.05,
+                vote_fraction=0.7
+            )
+                        
+            if estimate is None:
+                return None
+            
+            X, Y, common  = estimate
+            centroids = X,Y
+            # build a small uncertainty polygon for persistence
+
+        
+
+        print (centroids)
         all_tags_data[sheet_name] = {
             'tag_x': tag_x,
             'tag_y': tag_y,
             'centroids': centroids,
-            'intersection_polygon': common_intersection
+            'intersection_polygon': common
         }
         plt.show()
     create_all_tags_plot(all_tags_data)
@@ -435,7 +534,7 @@ def process_tag_data(excel_file):
     print ("full time =", end - start,"sec")
 
 if __name__ == "__main__":
-    excel_files = glob.glob('rfid_data_011025_160610-many-tags.xlsx')
+    excel_files = glob.glob('rfid_data_280126_104613.xlsx')
     if not excel_files:
         print("No RFID data files found in the current directory!")
         exit(1)
