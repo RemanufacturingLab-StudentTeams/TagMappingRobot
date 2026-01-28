@@ -29,14 +29,14 @@ class Processor(threading.Thread):
                 print ("connecting")
                 self.mqtt_client = mqtt.Client(client_id = self.mqtt_config.get('mqtt_name'), callback_api_version=mqtt.CallbackAPIVersion.VERSION1  )
                 self.mqtt_client.connect(self.mqtt_config.get('broker_host'), self.mqtt_config.get('broker_port'), 60)
-                self.client.loop_start()
+                self.mqtt_client.loop_start()
             except Exception as e:
                 print (f"error connecting to broker:{e} ")                
         
     def stop(self):
         
         if self.mqtt_config.get('enabled'):
-            self.client.loop_stop()
+            self.mqtt_client.loop_stop()
             self.mqtt_client.disconnect()
             print ("mqtt HMI: disconnected.")
         self._stop.set()
@@ -62,8 +62,9 @@ class Processor(threading.Thread):
 
         if self.mqtt_config.get('enabled'):
             try:
-                self.mqtt_client.publish(topic, payload)
-                #print (f"sending {payload}")
+                self.mqtt_client.publish(topic, payload, qos=1)
+                #self.mqtt_client.publish(topic, payload)
+                print (f"sending 1 : {payload}")
             except Exception as e:
                 print("Processor: MQTT publish error:", e)
 
@@ -105,7 +106,7 @@ class Processor(threading.Thread):
                 print("Localisation error for tag:", tag, e)
 
         if results:
-            print ("sending results", results)
+            #print ("sending results", results)
             self._publish_batch(results)
         if self.interactive.get('write_to_excel'):
             data = []

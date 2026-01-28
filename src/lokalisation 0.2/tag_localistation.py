@@ -315,12 +315,15 @@ def process_measurements(tag_id, measurements):
             print (f"Rejected poly:{poly} for tag {tag_id} weird shape\n Skipping to next group")
             continue
         shapely_polygons.append(poly)
-
-    prev = db.get_polygon(tag_id)
-    if prev:
-        shapely_polygons.append(prev)
+    try:
+        prev = db.get_polygon(tag_id)
+    except Exception as e:
+        prev = None
+        print (f"error getting previus poly:{e}")
 
     if (OVERLAP_METHOD == 0):
+        if prev:
+            shapely_polygons.append(prev)
         common = find_core_intersection(shapely_polygons)
         if common is None or common.is_empty:
             print (f"No common intersection for tag {tag_id}")
@@ -333,20 +336,23 @@ def process_measurements(tag_id, measurements):
             common = min(common.geoms, key=lambda p: p.area)
     
         centroid = common.centroid
+        tagX = centroid.x
+        tagY = centroid.y
 
     if (OVERLAP_METHOD == 1):
+        if not prev:
+            prev = None
         estimate = estimate_location_with_uncertainty(
             shapely_polygons,
             prev_polygon=prev,
             grid_step=0.05,
-            vote_fraction=0.8
+            vote_fraction=0.7
         )
         
         if estimate is None:
             return None
         
-        X, Y , common= estimate
-        centroid= X,Y
+        tagX, tagY , common= estimate
         db.save_polygon(tag_id, common)
     
     try:
@@ -358,8 +364,8 @@ def process_measurements(tag_id, measurements):
 
     return {
         "ID": tag_id,
-        "X": round(centroid.x, 2),
-        "Y": round(centroid.y, 2),
+        "X": round(tagX, 2),
+        "Y": round(tagY, 2),
         "r": round(rotation, 2),
         "w": round(width, 2),
         "h": round(height, 2)
