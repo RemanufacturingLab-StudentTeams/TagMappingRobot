@@ -1,4 +1,4 @@
-
+#!/usr/bin/env python3
 
 # convert_map_for_dash.py
 # Converts a ROS/SLAM map (.pgm + .yaml) into a Dash-ready PNG

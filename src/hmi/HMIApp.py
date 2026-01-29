@@ -1,13 +1,6 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
 """
 Created on Thu Jan 15 15:29:27 2026
-
-@author: renyb
-"""
-
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Dec  3 14:50:28 2025
 
 @author: renyb
 """
@@ -19,16 +12,14 @@ import plotly.graph_objects as go
 import numpy as np
 import os
 
-import json 
+import json
 import threading
 import paho.mqtt.client as mqtt
 import sqlite3
 
-
-
 current_df = pd.DataFrame()
 name_file = "tag_names.csv"     #Tag names file
-DB_PATH = "tag_data.db"         #Database file
+DB_PATH = "tag_data_HMI.db"         #Database file
 start_data = []
 
 
@@ -37,25 +28,25 @@ start_data = []
 def on_connect_function(client, userdata, flags, rc):
     print("Connected with result code" + str(rc))
     client.subscribe("HMI/topic") ##dit veranderen!!!!
-    
+
 #Called when new MQTT message arrive
 #Message in msg.payload
 def on_message_function(client, userdata, msg):
-    
+
     global current_df
     message = msg.payload.decode()
     data_list = json.loads(message)
-    
+
     save_readings_to_db(data_list)
-    
+
     message_df = pd.DataFrame(
-        data_list, 
+        data_list,
         columns=["ID", "X", "Y", "r", "w", "h"])
-    
+
     if message_df.empty:
         current_df = message_df
         return
-    
+
     if current_df is None or current_df.empty:
         current_df = message_df
         return
@@ -78,7 +69,7 @@ def on_message_function(client, userdata, msg):
 
 
 
-def mqtt_thread():  
+def mqtt_thread():
     client = mqtt.Client()
     #Event functions for when client connects to broker
     client.on_connect = on_connect_function
@@ -86,59 +77,59 @@ def mqtt_thread():
     #Connect to broker
     client.connect("10.35.4.195", 1883, 60)
     client.loop_forever()
-    
 
-        
+
+
 
 
 
 def init_db():
     #Makes a database to store data, this data can be read when the mecabot is offiline
-    
+
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
-    
+
     cur.execute("""
                 CREATE TABLE IF NOT EXISTS readings (
-                    tag_id      TEXT PRIMARY KEY, 
-                    x           REAL, 
-                    y           REAL, 
-                    r           REAL, 
-                    w           REAL, 
+                    tag_id      TEXT PRIMARY KEY,
+                    x           REAL,
+                    y           REAL,
+                    r           REAL,
+                    w           REAL,
                     h           REAL
                     )
                 """)
-    
+
     conn.commit()
     conn.close()
-    
+
 
 def save_readings_to_db(data_list):
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
-    
+
     for item in data_list:
         cur.execute("""
                     INSERT INTO readings (tag_id, x, y, r, w, h)
                     VALUES (?, ?, ?, ?, ?, ?)
                     ON CONFLICT(tag_id) DO UPDATE SET
-                        x = excluded.x, 
-                        y = excluded.y, 
-                        r = excluded.r, 
-                        w = excluded.w, 
+                        x = excluded.x,
+                        y = excluded.y,
+                        r = excluded.r,
+                        w = excluded.w,
                         h = excluded.h
                     """, (
-                    item["ID"], 
-                    item["X"], 
-                    item["Y"], 
+                    item["ID"],
+                    item["X"],
+                    item["Y"],
                     item["r"],
-                    item["w"], 
+                    item["w"],
                     item["h"],
                     )
             )
     conn.commit()
     conn.close()
-    
+
 def get_latest_db():
     conn = sqlite3.connect(DB_PATH)
     df = pd.read_sql_query("""
@@ -147,16 +138,16 @@ def get_latest_db():
          """, conn)
     conn.close()
     return df
-    
+
 
 
 #Als name bestand niet bestaat dan eentje aanmaken
 if not os.path.exists(name_file):
     pd.DataFrame(columns=["ID", "name"]).to_csv(name_file, index=False)
 
- 
 
-#Create object of Dash app                       
+
+#Create object of Dash app
 app = Dash()
 
 
@@ -174,34 +165,34 @@ def create_figure(df):
     else:
         fig = px.scatter(df, x='X', y='Y', hover_name="name")
         fig.update_traces(marker=dict(size=15, color='red'))
-               
+
         theta = np.linspace(0, 2*np.pi, 100)
-    
+
         for _, row in df.iterrows():
             x0, y0 = row["X"], row["Y"]
             w = row["w"]
             h = row["h"]
             angle = np.deg2rad(row["r"])  # rotatiehoek in radialen
-    
+
             x_ellipse = x0 + (w/2) * np.cos(theta) * np.cos(angle) - (h/2) * np.sin(theta) * np.sin(angle)
             y_ellipse = y0 + (w/2) * np.cos(theta) * np.sin(angle) + (h/2) * np.sin(theta) * np.cos(angle)
-    
+
             fig.add_trace(go.Scatter(
                 x=x_ellipse,
                 y=y_ellipse,
                 mode="lines",
-                line=dict(color="blue", width=1), 
+                line=dict(color="blue", width=1),
                 hoverinfo="skip"
             ))
-    
-    
+
+
     fig.add_layout_image( {'source': '/assets/WHEELTEC.png', 'xref': 'x', 'yref': 'y', 'x': -6.26, 'y': 12.23, 'sizex': 19.400000000000002, 'sizey': 17.5, 'sizing': 'stretch', 'layer': 'below', 'opacity': 0.8} )
     fig.update_layout(
         xaxis_scaleanchor="y",  # equal aspect ratio (1m = 1m)
         xaxis_title="X [m]",
         yaxis_title="Y [m]",
         margin=dict(l=20, r=20, t=30, b=20),
-        uirevision="constant", 
+        uirevision="constant",
         plot_bgcolor="#cdcdcd"
     )
     fig.update_xaxes(range=[-6.26, 13.140000000000002])
@@ -228,7 +219,7 @@ app.layout = html.Div(
         html.H3(
         "Tag Information",
         style={
-            
+
             "color": "white",
             "fontFamily": "Frutiger, Segoe UI, Helvetica, Arial, sans-serif",
             "fontSize": "42px",
@@ -236,7 +227,7 @@ app.layout = html.Div(
             "marginBottom": "5px"
         }
         ),
-        
+
         html.H5(
             "Tag Mapping Group",
             style={
@@ -247,7 +238,7 @@ app.layout = html.Div(
                 "marginTop": "0"
             }
         ),
-        
+
         #Create data table with no data in it. We can also delete it
         html.Div(
             style={
@@ -280,7 +271,7 @@ app.layout = html.Div(
                         )
                     ],
                 ),
-        
+
                 # Rechts: knoppen + status (komt zo)
                 # Rechts: knoppen + status (onder elkaar)
                 html.Div(
@@ -339,23 +330,23 @@ app.layout = html.Div(
         ),
         html.Br(),
 
-        
+
         html.Div(
             style={
                 "display": "flex",
                 "justifyContent": "center",
                 "alignItems": "flex-start",
                 "gap": "40px",
-                "flexWrap": "wrap",       
-                "maxWidth": "95vw",       
+                "flexWrap": "wrap",
+                "maxWidth": "95vw",
                 "margin": "auto",
                 "marginTop": "20px"
-                
+
             },
             children=[
                 # Linkerkant: scatter plot
                 dcc.Graph(id="scatter-plot", figure=fig, style={"flex": "3", "width": "400px", "height":"500px"}),
-        
+
                 # ➡️ Rechterkant: melding en input
                 html.Div(
                     id="name-input-div",
@@ -394,13 +385,13 @@ app.layout = html.Div(
         ),
         html.Br(),
         dcc.Interval(id='interval1', interval = 2000, n_intervals=0)
-        
+
 
         ]
-        
+
     )
 
-#Update data each two seconds 
+#Update data each two seconds
 @app.callback(
     [Output("data-table1", "data"),
      Output("scatter-plot", "figure"),
@@ -418,11 +409,11 @@ def update_data(n_intervals):
     if current_df is None or current_df.empty:
         empty_df = pd.DataFrame(columns=["ID", "X", "Y", "r", "w", "h", "name"])
         fig = create_figure(empty_df)
-        return [], fig, {"display": "none"}, ""  
-    
+        return [], fig, {"display": "none"}, ""
+
     # namen inlezen
     names = pd.read_csv(name_file)      # kolommen: ID, name
-    
+
     # both ID's from the csv file and data base same type
     current_df["ID"] = current_df["ID"].astype(str)
     names["ID"] = names["ID"].astype(str)
@@ -442,7 +433,7 @@ def update_data(n_intervals):
     # figuur maken met deze df
     fig = create_figure(df_view)
 
-    
+
 
     if len(onbekende_tags) > 0:
         tag_id = onbekende_tags[0]
@@ -474,7 +465,7 @@ def update_data(n_intervals):
 )
 def save_new_name(n_clicks, new_name):
     global current_df
-    
+
     if n_clicks > 0 and new_name:
         if current_df is None or current_df.empty:
             data = get_latest_db()
@@ -484,30 +475,30 @@ def save_new_name(n_clicks, new_name):
         print("okay 1")
         # namen inlezen
         names = pd.read_csv(name_file)      # kolommen: ID, name
-        
+
         #Both ID as string
         data["ID"] = data["ID"].astype(str)
         names["ID"] = names["ID"].astype(str)
-        
+
         # merge op ID
         df_check = data.merge(names, on="ID", how="left")
-        
+
         df_check["name"] = df_check["name"].fillna("Onbekend")
-        
+
         unknown = df_check[df_check["name"] == "Onbekend"]["ID"]
-        
+
         if unknown.empty:
             print("unkown empty")
             return""
-        tag_id = unknown.iloc[0]    
+        tag_id = unknown.iloc[0]
 
-        
+
         names.loc[len(names)] = {"ID": tag_id, "name": new_name}
         names.to_csv(name_file, index=False)
         print(f"Nieuwe naam toegevoegd: {tag_id} → {new_name}")
     # Leeg inputveld na opslaan
     return ""
-    
+
 
 if __name__ == '__main__':
     init_db()
