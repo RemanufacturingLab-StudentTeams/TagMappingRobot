@@ -219,4 +219,4 @@ __marimo__/
 # Ignore Database files
 *.db
 *.csv
-*.xslx
+*.xlsx
