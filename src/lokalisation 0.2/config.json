@@ -8,18 +8,17 @@
   "Z_value": 0,
   "mqtt": {
     "enabled": true,
-    "mqtt_name": "processor",
     "broker_host": "10.35.4.50",
     "broker_port": 1883,
     "topic": "HMI/topic"
   },
   "mecabot":{
     "enabled": true,
-    "name"  : "runner",
     "broker" : "10.35.4.195",
     "topic" : "test/topic"
   },
   "lokalisation_config":{
+    "DATABASE_FILE": "tag_data_lok",
     "MIN_POLY_AREA": 1e-5,
     "POLY_SHAPE_RATIO": 8, 
     "MIN_RSSI": -85,

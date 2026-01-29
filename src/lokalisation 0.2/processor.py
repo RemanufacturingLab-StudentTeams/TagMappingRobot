@@ -12,7 +12,7 @@ import pandas as pd
 
 class Processor(threading.Thread):
     def __init__(self, work_queue: queue.Queue,
-                 batch_count=5, mqtt_config=None, interactive=None,lokalisation_config=None):
+                 batch_count=5, mqtt_config=None, interactive=False,lokalisation_config=None):
         super().__init__(daemon=True)
         self.q = work_queue
         self.batch_count = batch_count
@@ -26,7 +26,7 @@ class Processor(threading.Thread):
         if (self.mqtt_config.get('enabled')):
             try:
                 print ("connecting")
-                self.mqtt_client = mqtt.Client(client_id = self.mqtt_config.get('mqtt_name'), callback_api_version=mqtt.CallbackAPIVersion.VERSION1  )
+                self.mqtt_client = mqtt.Client(callback_api_version=mqtt.CallbackAPIVersion.VERSION1  )
                 self.mqtt_client.connect(self.mqtt_config.get('broker_host'), self.mqtt_config.get('broker_port'), 60)
                 self.mqtt_client.loop_start()
             except Exception as e:

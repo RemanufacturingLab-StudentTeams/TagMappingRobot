@@ -1,0 +1,8 @@
+# optimization_lokalisation_alg.py
+### visualizes the data and calculations with the optimizations of the loakisation alg
+### Features
+- read xslx file
+- plot data
+- calculate location
+
+input file name and location in RFID_DATA_FILES =

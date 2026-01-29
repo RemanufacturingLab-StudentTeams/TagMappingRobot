@@ -3,12 +3,15 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 from matplotlib.patches import Polygon
 from shapely.geometry import Polygon as ShapelyPolygon
+from shapely.geometry import Point, MultiPoint
+from shapely.ops import unary_union
 import pandas as pd
 import os
 import glob
 import time
 
 RFID_DATA_FILES = 'rfid_data_280126_135200.xlsx'
+OVERLAP_METHODE = 1
 
 # -------------------
 # Constants
@@ -72,7 +75,7 @@ inverse_rssi = interp1d(
 def solve_distance(rssi, init=1.5):
     return float(inverse_rssi(rssi))
 
-def rotate_points(x, y, angle_deg):
+def rotate_points(x, y, angle_deg ):
     """Rotate points (x, y) by angle_deg around the origin."""
     angle_rad = np.radians(-angle_deg - 90)
     x_rot = x * np.cos(angle_rad) - y * np.sin(angle_rad)
@@ -257,7 +260,7 @@ def create_intersection_plot(all_data, tag_x, tag_y, tag_id):
         dy = VECTOR_LENGTH * np.cos(np.radians(beta))
         plt.arrow(ant_x, ant_y, dx, dy, head_width=0.04, head_length=0.08, fc='k', ec='k', width=0.015, length_includes_head=True)
     shapely_polygons = [ShapelyPolygon(poly) for poly in polygons]
-    common_intersection = find_core_intersection(shapely_polygons)
+    common_intersection = find_most_common_intersection(shapely_polygons)
     if common_intersection is not None and not common_intersection.is_empty:
         if common_intersection.geom_type == 'MultiPolygon':
             for poly in common_intersection.geoms:
@@ -285,31 +288,6 @@ def create_intersection_plot(all_data, tag_x, tag_y, tag_id):
     plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
     plt.tight_layout()
     
-def find_core_intersection(polygons, min_area=0.0001):
-    """
-    Find the core area where most polygons overlap.
-    polygons: list of ShapelyPolygon
-    min_area: minimal polygon area to consider
-    """
-    if not polygons:
-        return None
-    
-    # Start with polygon with largest area as core
-    polygons_sorted = sorted(polygons, key=lambda p: p.area, reverse=True)
-    core = polygons_sorted[0]
-    used = {0}
-
-    # Iteratively intersect with other polygons
-    remaining = [(i, p) for i, p in enumerate(polygons_sorted[1:], start=1)]
-    for i, p in remaining:
-        intersection = core.intersection(p)
-        if not intersection.is_empty and intersection.area >= min_area:
-            core = intersection
-            used.add(i)
-
-    if core.is_empty:
-        return None
-    return core
 
 def create_all_tags_plot(tags_data):
     """Create a plot showing all tag positions and intersection areas."""
@@ -349,10 +327,6 @@ def create_all_tags_plot(tags_data):
     plt.title('Tag Positions and Intersection Areas Map')
     plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
     plt.tight_layout()
-    
-from shapely.geometry import Point, MultiPoint
-from shapely.ops import unary_union
-import numpy as np
 
 def estimate_location_with_uncertainty(
     polygons,
@@ -481,9 +455,8 @@ def process_tag_data(excel_file):
                         print (f"Rejected poly:{poly} weird shape")
                         continue
                     shapely_polygons.append(poly)
-                OVERLAP_METHODE = 1
                 if (OVERLAP_METHODE == 0):
-                    common = find_core_intersection(shapely_polygons)
+                    common = find_most_common_intersection(shapely_polygons)
                     if common is None or common.is_empty:
                         return(None)
                         
