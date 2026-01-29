@@ -1,3 +1,8 @@
+#!/usr/bin/env python3
+"""
+This file gets the current location of the Mecabot and sends it to a MQTT broker.
+This data is used by the localasation algorithm to calculat tag location.
+"""
 import rclpy
 from rclpy.node import Node
 from rclpy.duration import Duration
@@ -19,16 +24,16 @@ class MapTFListener(Node):
     def __init__(self):
         super().__init__('map_tf_listener')
         self.get_logger().info("Node started!")
-        
+
         #TF Mecabot X
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
-        
+
         #positie (x,y,Rz)
         self.x = None
         self.y = None
         self.yaw = None
-        
+
         #MQTT
         self.client = mqtt.Client(
             callback_api_version=mqtt.CallbackAPIVersion.VERSION1
@@ -37,8 +42,8 @@ class MapTFListener(Node):
         self.client.loop_start()
 
         #timers
-        self.create_timer(1.0, self.lookup_position)      # TF lookup 
-        self.create_timer(delaytijd, self.publish_data)   # MQTT publish 
+        self.create_timer(1.0, self.lookup_position)      # TF lookup
+        self.create_timer(delaytijd, self.publish_data)   # MQTT publish
 
 
     def lookup_position(self):
@@ -52,22 +57,22 @@ class MapTFListener(Node):
             #positie (X,Y)
             self.x = trans.transform.translation.x
             self.y = trans.transform.translation.y
-            
+
             #rotatie richting in rad (om de Z as)
             qx = trans.transform.rotation.x
             qy = trans.transform.rotation.y
             qz = trans.transform.rotation.z
             qw = trans.transform.rotation.w
-            
+
             roll, pitch, yaw = euler_from_quaternion([qx, qy, qz, qw])
             self.yaw = yaw
             self.yaw_degree = np.rad2deg(yaw) #radialen naar graden
 
             self.get_logger().info(f"Position: x={self.x:.2f}, y={self.y:.2f}, yaw={self.yaw:.2f}")
-        
+
         except Exception as e:
             self.get_logger().warn(f"TF error: {e}")
-            
+
     def publish_data(self):
         if self.x is None:
             return
