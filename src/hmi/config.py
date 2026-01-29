@@ -10,7 +10,7 @@ os.makedirs(DATA_DIR, exist_ok=True)
 NAME_FILE = os.path.join(DATA_DIR, "tag_names.csv")
 DB_PATH = os.path.join(DATA_DIR, "tag_data_HMI.db")
 
-MQTT_BROKER = "localhost"
+MQTT_BROKER = "10.35.4.195"
 MQTT_PORT = 1883
 MQTT_KEEPALIVE = 60
 MQTT_TOPIC = "HMI/topic"
